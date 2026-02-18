@@ -1,0 +1,104 @@
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e5e5e5;
+    margin-bottom: 24px;
+}
+
+.leftGroup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.selectWrapper {
+    position: relative;
+}
+
+.select {
+    appearance: none;
+    background-color: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 8px 32px 8px 12px;
+    font-size: 0.875rem;
+    color: #333;
+    cursor: pointer;
+    min-width: 100px;
+}
+
+.select:focus {
+    outline: none;
+    border-color: #000;
+}
+
+/* Custom dropdown arrow would go here via background-image */
+
+.manageBtn {
+    background-color: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    color: #333;
+    cursor: pointer;
+}
+
+.manageBtn:hover {
+    background-color: #f9f9f9;
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: #333;
+    margin-left: 12px;
+    cursor: pointer;
+}
+
+.rightGroup {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.searchWrapper {
+    display: flex;
+    align-items: center;
+    background-color: #f4f4f5;
+    border-radius: 4px;
+    padding: 6px 12px;
+    gap: 8px;
+    border: 1px solid transparent;
+}
+
+.searchWrapper:focus-within {
+    border-color: #000;
+    background-color: #fff;
+}
+
+.searchInput {
+    border: none;
+    background: transparent;
+    font-size: 0.875rem;
+    color: #333;
+    outline: none;
+    width: 200px;
+}
+
+.filterBtn {
+    background-color: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #333;
+}

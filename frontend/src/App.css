@@ -1,0 +1,33 @@
+.app-container {
+  min-height: 100vh;
+  background-color: #fafafa;
+  /* Light gray background for contrast with cards */
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background-color: #fff;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.header h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111;
+  margin: 0;
+}
+
+.main-content {
+  padding: 0 24px 48px 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.ads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
