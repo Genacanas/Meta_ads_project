@@ -4,6 +4,7 @@ import { AdCard } from './components/AdCard';
 import { usePages } from './hooks/usePages';
 import { useCountries } from './hooks/useCountries';
 import { LayoutGrid } from 'lucide-react';
+import { AddSearchTerm } from './components/AddSearchTerm';
 
 import './App.css';
 
@@ -63,8 +64,9 @@ function App() {
 
   return (
     <div className="app-container">
-      <header className="header">
+      <header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>Ad Library Analysis</h1>
+        <AddSearchTerm onTermAdded={() => window.location.reload()} />
       </header>
 
       <FilterBar

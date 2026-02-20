@@ -1,18 +1,13 @@
-from db.postgres_client import get_conn, fetch_unprocessed_terms
+from db.postgres_client import get_conn, fetch_terms
 import logging
 
 logger = logging.getLogger(__name__)
 
-def fetch_terms():
-    """
-    Fetches unprocessed search terms from the database.
-    Returns:
-        list: A list of logic dictionaries containing term data.
-    """
+def fetch_terms_step(limit=None):
     conn = get_conn()
     try:
-        terms = fetch_unprocessed_terms(conn)
-        logger.info(f"Step 1: Fetched {len(terms)} unprocessed terms.")
+        terms = fetch_terms(conn, limit=limit)
+        logger.info(f"Step 1: Fetched {len(terms)} terms.")
         return terms
     except Exception as e:
         logger.error(f"Step 1 Failed: {e}")

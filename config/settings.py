@@ -7,14 +7,10 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 META_ACCESS_TOKEN = os.getenv("META_ACCESS_TOKEN")
 
-# Example Search Configuration
-# This could be loaded from a JSON file or DB in the future
-SEARCH_CONFIG = [
-    {
-        "country": "DE",
-        "terms": [
-            "Rabatt", "Förderung", "Auto", "Kostenlose Lieferung", 
-            "Kaufen bei", "Kinder", "Zuhause", "Werkzeug"
-        ]
-    }
-]
+# Concurrency Settings
+TERMS_CONCURRENCY = int(os.getenv("TERMS_CONCURRENCY", 5))
+PAGES_CONCURRENCY = int(os.getenv("PAGES_CONCURRENCY", 20))
+MEDIA_CONCURRENCY = int(os.getenv("MEDIA_CONCURRENCY", 13))
+
+# Browser Settings
+PLAYWRIGHT_HEADLESS = os.getenv("PLAYWRIGHT_HEADLESS", "True").lower() == "true"

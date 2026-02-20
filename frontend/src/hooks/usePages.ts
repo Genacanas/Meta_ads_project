@@ -36,10 +36,7 @@ export function usePages(
                 setLoading(true);
                 setError(null);
 
-                // Determine join type based on filter
                 const isCountryFilterActive = filters.country && filters.country !== 'All';
-                const adsJoin = isCountryFilterActive ? 'ads!inner' : 'ads';
-                const termsJoin = isCountryFilterActive ? 'search_terms!inner' : 'search_terms';
 
                 let query = supabase
                     .from('pages')
@@ -52,21 +49,16 @@ export function usePages(
                 ad_snapshot_url
               )
             ),
-            ${adsJoin} (
-                beneficiary,
-                ${termsJoin} (
-                    country
-                )
+            ads (
+                beneficiary
             )
           `)
                     .order('total_eu_reach', { ascending: false })
                     .range(page * limit, (page + 1) * limit - 1);
 
-                // Filter by Country (Search Term Country)
+                // Filter by Country using pages.country (set during Step 2 page discovery)
                 if (isCountryFilterActive) {
-                    // We need to filter based on the joined ads -> search_terms -> country
-                    // Supabase handles this via the !inner join key and filter
-                    query = query.eq('ads.search_terms.country', filters.country);
+                    query = query.eq('country', filters.country);
                 }
 
                 // Filter by Search Term (Page Name)
