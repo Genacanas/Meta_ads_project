@@ -109,6 +109,15 @@ def process_page_ads(page_record, meta_client, min_date):
                         beneficiary = bp["beneficiary"]
                         break
                         
+            # Extract ad_creative_bodies and convert to JSON string
+            import json
+            ad_creative_bodies_val = None
+            if ad.get("ad_creative_bodies"):
+                try:
+                    ad_creative_bodies_val = json.dumps(ad.get("ad_creative_bodies"))
+                except Exception:
+                    pass
+
             # Collect Ad Data
             ads_to_upsert.append({
                 "ad_id": ad.get("id"),
@@ -120,14 +129,8 @@ def process_page_ads(page_record, meta_client, min_date):
                 "eu_total_reach": reach_val,
                 "is_active": is_active,
                 "beneficiary": beneficiary,
-                # "search_term_id": term_id, # We don't have term_id easily here since we decoupled. 
-                # This is a trade-off. We might need to map it if strictly required, 
-                # but user wanted to decouple. We can leave it null or try to infer.
-                # The previous logic had it. If it's critical, we need to pass it.
-                # However, many pages map to multiple terms.
-                # Ideally, we link ads to pages, and pages to terms (via search_results table? or just loose coupling).
-                # For now, we omit search_term_id or set to 0/NULL.
-                "search_term_id": None 
+                "search_term_id": None,
+                "ad_creative_bodies": ad_creative_bodies_val
             })
 
         # Insert Ads

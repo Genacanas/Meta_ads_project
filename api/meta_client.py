@@ -263,7 +263,7 @@ class MetaClient:
             "ad_reached_countries": countries,
             "ad_active_status": "ACTIVE", # FORCE ACTIVE ONLY
             "ad_type": "ALL", 
-            "fields": "id,page_id,page_name,ad_creation_time,ad_delivery_start_time,ad_delivery_stop_time,ad_snapshot_url,eu_total_reach,is_active_status,beneficiary_payers",
+            "fields": "id,page_id,page_name,ad_creation_time,ad_delivery_start_time,ad_delivery_stop_time,ad_snapshot_url,eu_total_reach,is_active_status,beneficiary_payers,ad_creative_bodies",
             "limit": limit
         }
         return self._make_request(params, max_pages=None) # Fetch ALL ads

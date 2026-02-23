@@ -6,7 +6,8 @@ export interface PageData {
     name: string;
     country: string;
     total_eu_reach: number;
-    beneficiary?: string; // New field
+    manual_status: string; // New field for approval workflow
+    beneficiary?: string;
     top_creative?: {
         media_url: string;
         media_type: 'image' | 'video';
@@ -15,7 +16,7 @@ export interface PageData {
 }
 
 export function usePages(
-    filters: { country?: string; searchTerm?: string },
+    filters: { country?: string; searchTerm?: string; status?: 'unprocessed' | 'saved' | 'deleted' },
     page: number = 0,
     limit: number = 100
 ) {
@@ -28,7 +29,7 @@ export function usePages(
     useEffect(() => {
         setPages([]);
         setHasMore(true);
-    }, [filters.country, filters.searchTerm]);
+    }, [filters.country, filters.searchTerm, filters.status]);
 
     useEffect(() => {
         async function fetchPages() {
@@ -37,6 +38,7 @@ export function usePages(
                 setError(null);
 
                 const isCountryFilterActive = filters.country && filters.country !== 'All';
+                const currentStatus = filters.status || 'unprocessed';
 
                 let query = supabase
                     .from('pages')
@@ -53,6 +55,8 @@ export function usePages(
                 beneficiary
             )
           `)
+                    .gte('active_total_eu_reach', 200000)
+                    .eq('manual_status', currentStatus)
                     .order('total_eu_reach', { ascending: false })
                     .range(page * limit, (page + 1) * limit - 1);
 
@@ -110,7 +114,7 @@ export function usePages(
         }
 
         fetchPages();
-    }, [filters.country, filters.searchTerm, page, limit]);
+    }, [filters.country, filters.searchTerm, filters.status, page, limit]);
 
-    return { pages, loading, error, hasMore };
+    return { pages, setPages, loading, error, hasMore };
 }

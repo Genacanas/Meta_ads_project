@@ -30,7 +30,7 @@ UPSERT_AD_SQL = """
 INSERT INTO ads (
     ad_id, page_id, ad_creation_time, ad_delivery_start_time,
     ad_delivery_stop_time, ad_snapshot_url, eu_total_reach,
-    is_active, beneficiary, search_term_id
+    is_active, beneficiary, search_term_id, ad_creative_bodies
 )
 VALUES %s
 ON CONFLICT (ad_id)
@@ -43,7 +43,8 @@ DO UPDATE SET
     eu_total_reach = EXCLUDED.eu_total_reach,
     is_active = EXCLUDED.is_active,
     beneficiary = EXCLUDED.beneficiary,
-    search_term_id = EXCLUDED.search_term_id;
+    search_term_id = EXCLUDED.search_term_id,
+    ad_creative_bodies = EXCLUDED.ad_creative_bodies;
 """
 
 def upsert_pages(conn, pages_data):
@@ -69,7 +70,8 @@ def upsert_ads(conn, ads_data):
             a["ad_id"], a["page_id"], a["ad_creation_time"],
             a["ad_delivery_start_time"], a["ad_delivery_stop_time"],
             a["ad_snapshot_url"], a["eu_total_reach"],
-            a["is_active"], a["beneficiary"], a.get("search_term_id")
+            a["is_active"], a["beneficiary"], a.get("search_term_id"),
+            a.get("ad_creative_bodies")
         )
         for a in ads_data
     ]
@@ -143,7 +145,7 @@ def fetch_media_pending_pages(conn, limit=None):
 
 def mark_page_status(conn, page_id, status_column, status_value):
     """Update a status column (ads_status or media_status) for a page."""
-    valid_columns = ['ads_status', 'media_status']
+    valid_columns = ['ads_status', 'media_status', 'classification_status']
     if status_column not in valid_columns:
         raise ValueError(f"Invalid status column: {status_column}")
         
@@ -293,4 +295,76 @@ def mark_token_invalid(conn, token: str):
                 updated_at = now()
             WHERE token = %s
         """, (token,))
+    conn.commit()
+
+# --- Classification (Step 5) ---
+
+def fetch_classification_pending_pages(conn, limit=1000):
+    """Fetch pages for classification (ads_status=completed, classification_status=pending, highly active)."""
+    pages_list = []
+    with conn.cursor() as cur:
+        sql = """
+            SELECT page_id, name 
+            FROM pages 
+            WHERE classification_status = 'pending' 
+              AND ads_status = 'completed'
+              AND active_total_eu_reach >= 200000
+        """
+        if limit:
+            sql += f" LIMIT {limit}"
+        cur.execute(sql)
+        for row in cur.fetchall():
+            pages_list.append(row)
+    return pages_list
+
+def fetch_page_ads_bodies(conn, page_id):
+    """Fetch ad bodies from ads table for a specific page."""
+    bodies = []
+    with conn.cursor() as cur:
+        # We fetch all non-null bodies for this page
+        cur.execute("SELECT ad_creative_bodies FROM ads WHERE page_id = %s AND ad_creative_bodies IS NOT NULL", (page_id,))
+        for row in cur.fetchall():
+            try:
+                import json
+                parsed = json.loads(row[0])
+                if isinstance(parsed, list):
+                    for body in parsed:
+                        if body and body not in bodies:
+                            if len(bodies) < 30:
+                                bodies.append(body)
+            except Exception:
+                pass
+    return bodies
+
+def save_openai_batch(conn, batch_id):
+    """Save a new openai batch ID."""
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO openai_batches (batch_id, status) VALUES (%s, 'in_progress')", (batch_id,))
+    conn.commit()
+
+def get_pending_openai_batches(conn):
+    """Get all in_progress batches."""
+    batches = []
+    with conn.cursor() as cur:
+        cur.execute("SELECT batch_id FROM openai_batches WHERE status = 'in_progress'")
+        for row in cur.fetchall():
+            batches.append(row[0])
+    return batches
+
+def update_openai_batch_status(conn, batch_id, status):
+    """Update status of a batch."""
+    with conn.cursor() as cur:
+        cur.execute("UPDATE openai_batches SET status = %s WHERE batch_id = %s", (status, batch_id))
+    conn.commit()
+
+def mark_page_classification(conn, page_id, category, raw_category, status='completed'):
+    """Update page with final classification result."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            UPDATE pages 
+            SET category = %s,
+                openai_category_raw = %s,
+                classification_status = %s
+            WHERE page_id = %s
+        """, (category, raw_category, status, page_id))
     conn.commit()

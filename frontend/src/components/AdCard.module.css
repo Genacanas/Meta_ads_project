@@ -21,28 +21,71 @@
     font-weight: 600;
     color: #1a1a1a;
     margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.actions {
+.actionRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 4px;
+}
+
+.infoCol {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.buttonGroup {
     display: flex;
     gap: 8px;
 }
 
 .actionBtn {
-    font-size: 0.75rem;
-    padding: 4px 8px;
-    border: 1px solid #e5e5e5;
-    border-radius: 4px;
-    background: white;
-    color: #404040;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s;
+    border: 1px solid transparent;
+    /* default transparent to let custom border show */
 }
 
-.actionBtn:hover {
-    background: #f5f5f5;
-    border-color: #d4d4d4;
+.approveBtn {
+    color: #16a34a;
+    /* green icon */
+    background-color: #f0fdf4;
+    /* light green bg */
+    border-color: #bbf7d0;
+    /* light green border */
 }
+
+.approveBtn:hover {
+    background-color: #dcfce7;
+    border-color: #86efac;
+}
+
+.rejectBtn {
+    color: #dc2626;
+    /* red icon */
+    background-color: #fef2f2;
+    /* light red bg */
+    border-color: #fecaca;
+    /* light red border */
+}
+
+.rejectBtn:hover {
+    background-color: #fee2e2;
+    border-color: #fca5a5;
+}
+
+
 
 .subHeader {
     display: flex;
