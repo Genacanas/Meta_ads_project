@@ -257,7 +257,7 @@ def process_download_batches():
 def main_sync():
     """Called periodically by pipeline."""
     process_download_batches()
-    process_upload_batch()
+    # process_upload_batch() # Temporarily disabled for testing
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

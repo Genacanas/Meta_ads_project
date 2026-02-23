@@ -11,6 +11,7 @@ import './App.css';
 
 function App() {
   const [selectedCountry, setSelectedCountry] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('All'); // New state
   const [searchTerm, setSearchTerm] = useState('');
   const [filterReach, setFilterReach] = useState(false);
   const [activeTab, setActiveTab] = useState<'unprocessed' | 'saved' | 'deleted'>('unprocessed');
@@ -20,13 +21,18 @@ function App() {
 
   // Pass filters to hook
   const { pages, setPages, loading, error, hasMore } = usePages(
-    { country: selectedCountry, searchTerm, status: activeTab },
+    { country: selectedCountry, category: selectedCategory, searchTerm, status: activeTab },
     page
   );
 
   // Reset page when filters change
   const handleCountryChange = (c: string) => {
     setSelectedCountry(c);
+    setPage(0);
+  };
+
+  const handleCategoryChange = (c: string) => {
+    setSelectedCategory(c);
     setPage(0);
   };
 
@@ -135,6 +141,8 @@ function App() {
       <FilterBar
         selectedCountry={selectedCountry}
         onCountryChange={handleCountryChange}
+        selectedCategory={selectedCategory}
+        onCategoryChange={handleCategoryChange}
         onReachChange={setFilterReach}
         searchTerm={searchTerm}
         onSearchChange={handleSearchChange}

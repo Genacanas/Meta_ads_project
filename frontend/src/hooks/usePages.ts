@@ -16,7 +16,7 @@ export interface PageData {
 }
 
 export function usePages(
-    filters: { country?: string; searchTerm?: string; status?: 'unprocessed' | 'saved' | 'deleted' },
+    filters: { country?: string; category?: string; searchTerm?: string; status?: 'unprocessed' | 'saved' | 'deleted' },
     page: number = 0,
     limit: number = 100
 ) {
@@ -29,7 +29,7 @@ export function usePages(
     useEffect(() => {
         setPages([]);
         setHasMore(true);
-    }, [filters.country, filters.searchTerm, filters.status]);
+    }, [filters.country, filters.category, filters.searchTerm, filters.status]);
 
     useEffect(() => {
         async function fetchPages() {
@@ -38,6 +38,7 @@ export function usePages(
                 setError(null);
 
                 const isCountryFilterActive = filters.country && filters.country !== 'All';
+                const isCategoryFilterActive = filters.category && filters.category !== 'All';
                 const currentStatus = filters.status || 'unprocessed';
 
                 let query = supabase
@@ -63,6 +64,11 @@ export function usePages(
                 // Filter by Country using pages.country (set during Step 2 page discovery)
                 if (isCountryFilterActive) {
                     query = query.eq('country', filters.country);
+                }
+
+                // Filter by Category
+                if (isCategoryFilterActive) {
+                    query = query.eq('category', filters.category);
                 }
 
                 // Filter by Search Term (Page Name)
@@ -114,7 +120,7 @@ export function usePages(
         }
 
         fetchPages();
-    }, [filters.country, filters.searchTerm, filters.status, page, limit]);
+    }, [filters.country, filters.category, filters.searchTerm, filters.status, page, limit]);
 
     return { pages, setPages, loading, error, hasMore };
 }
