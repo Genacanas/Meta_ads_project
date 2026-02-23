@@ -1,29 +1,33 @@
-import { Check, X } from 'lucide-react';
+import { X, Check, RotateCcw } from 'lucide-react';
 import styles from './AdCard.module.css';
 
 interface AdCardProps {
     pageId: string;
     pageName: string;
-    beneficiary?: string; // New Prop
+    beneficiary?: string;
     totalReach: number;
     mediaUrl?: string;
     mediaType?: 'image' | 'video';
     snapshotUrl?: string;
-    onStatusChange?: (pageId: string, status: 'saved' | 'deleted') => void;
+    onStatusChange?: (pageId: string, status: 'saved' | 'deleted' | 'unprocessed') => void;
+    currentTab?: 'unprocessed' | 'saved' | 'deleted';
 }
 
 export function AdCard({
     pageId,
     pageName,
-    beneficiary = 'Unknown',
+    beneficiary,
     totalReach,
     mediaUrl,
-    mediaType = 'image',
+    mediaType,
     snapshotUrl,
     onStatusChange,
+    currentTab = 'unprocessed'
 }: AdCardProps) {
-    // Format reach with spaces (e.g. 882 329 833)
-    const formattedReach = new Intl.NumberFormat('fr-FR').format(totalReach).replace(/,/g, ' ');
+    const formattedReach = new Intl.NumberFormat('en-US', {
+        notation: "compact",
+        compactDisplay: "short"
+    }).format(totalReach);
 
     const handleCardClick = () => {
         if (snapshotUrl) {
@@ -33,6 +37,7 @@ export function AdCard({
 
     return (
         <div className={styles.card} onClick={handleCardClick} style={{ cursor: snapshotUrl ? 'pointer' : 'default' }}>
+            {/* Header info */}
             <div className={styles.header}>
                 <div className={styles.titleRow}>
                     <h3 className={styles.pageName}>
@@ -41,9 +46,7 @@ export function AdCard({
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            style={{ color: 'inherit', textDecoration: 'none' }}
-                            onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                            onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                            className={styles.pageLink}
                         >
                             {pageName}
                         </a>
@@ -55,26 +58,42 @@ export function AdCard({
                         <p className={styles.beneficiary}>{beneficiary}</p>
                     </div>
                     <div className={styles.buttonGroup}>
-                        <button
-                            className={`${styles.actionBtn} ${styles.rejectBtn}`}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onStatusChange?.(pageId, 'deleted');
-                            }}
-                            title="Mark as Deleted"
-                        >
-                            <X size={18} />
-                        </button>
-                        <button
-                            className={`${styles.actionBtn} ${styles.approveBtn}`}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onStatusChange?.(pageId, 'saved');
-                            }}
-                            title="Mark as Saved"
-                        >
-                            <Check size={18} />
-                        </button>
+                        {currentTab !== 'unprocessed' && (
+                            <button
+                                className={`${styles.actionBtn} ${styles.pendingBtn}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onStatusChange?.(pageId, 'unprocessed');
+                                }}
+                                title="Revert to Pending"
+                            >
+                                <RotateCcw size={18} />
+                            </button>
+                        )}
+                        {currentTab !== 'deleted' && (
+                            <button
+                                className={`${styles.actionBtn} ${styles.rejectBtn}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onStatusChange?.(pageId, 'deleted');
+                                }}
+                                title="Mark as Deleted"
+                            >
+                                <X size={18} />
+                            </button>
+                        )}
+                        {currentTab !== 'saved' && (
+                            <button
+                                className={`${styles.actionBtn} ${styles.approveBtn}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onStatusChange?.(pageId, 'saved');
+                                }}
+                                title="Mark as Saved"
+                            >
+                                <Check size={18} />
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

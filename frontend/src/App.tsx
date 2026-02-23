@@ -170,6 +170,7 @@ function App() {
                   mediaType={page.top_creative?.media_type}
                   snapshotUrl={page.top_creative?.snapshot_url}
                   onStatusChange={handleStatusChange}
+                  currentTab={activeTab}
                 />
               ))}
             </div>

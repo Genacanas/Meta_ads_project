@@ -26,6 +26,15 @@
     text-overflow: ellipsis;
 }
 
+.pageLink {
+    color: inherit;
+    text-decoration: none;
+}
+
+.pageLink:hover {
+    text-decoration: underline;
+}
+
 .actionRow {
     display: flex;
     justify-content: space-between;
@@ -85,7 +94,19 @@
     border-color: #fca5a5;
 }
 
+.pendingBtn {
+    color: #ca8a04;
+    /* yellow icon */
+    background-color: #fefce8;
+    /* light yellow bg */
+    border-color: #fef08a;
+    /* light yellow border */
+}
 
+.pendingBtn:hover {
+    background-color: #fef08a;
+    border-color: #fde047;
+}
 
 .subHeader {
     display: flex;
