@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 export interface PageData {
     page_id: string;
     name: string;
     country: string;
     total_eu_reach: number;
-    manual_status: string; // New field for approval workflow
+    manual_status: string; // New field for approval workflow ('unprocessed', 'saved', 'deleted')
     beneficiary?: string;
     top_creative?: {
         media_url: string;
@@ -32,94 +32,61 @@ export function usePages(
     }, [filters.country, filters.category, filters.searchTerm, filters.status]);
 
     useEffect(() => {
+        let isMounted = true;
+
         async function fetchPages() {
             try {
                 setLoading(true);
                 setError(null);
 
-                const isCountryFilterActive = filters.country && filters.country !== 'All';
-                const isCategoryFilterActive = filters.category && filters.category !== 'All';
                 const currentStatus = filters.status || 'unprocessed';
 
-                let query = supabase
-                    .from('pages')
-                    .select(`
-            *,
-            page_top_creatives!inner (
-              media_url,
-              media_type,
-              ads (
-                ad_snapshot_url
-              )
-            ),
-            ads (
-                beneficiary
-            )
-          `)
-                    .gte('active_total_eu_reach', 200000)
-                    .eq('manual_status', currentStatus)
-                    .order('total_eu_reach', { ascending: false })
-                    .range(page * limit, (page + 1) * limit - 1);
+                // Build the query parameter string
+                const queryParams = new URLSearchParams({
+                    status: currentStatus,
+                    limit: limit.toString(),
+                    offset: (page * limit).toString()
+                });
 
-                // Filter by Country using pages.country (set during Step 2 page discovery)
-                if (isCountryFilterActive) {
-                    query = query.eq('country', filters.country);
+                if (filters.country && filters.country !== 'All') {
+                    queryParams.append('country', filters.country);
                 }
 
-                // Filter by Category
-                if (isCategoryFilterActive) {
-                    query = query.eq('category', filters.category);
+                if (filters.category && filters.category !== 'All') {
+                    queryParams.append('category', filters.category);
                 }
 
-                // Filter by Search Term (Page Name)
                 if (filters.searchTerm) {
-                    query = query.ilike('name', `%${filters.searchTerm}%`);
+                    queryParams.append('searchTerm', filters.searchTerm);
                 }
 
-                const { data, error } = await query;
+                const data: PageData[] = await api.get(`/pages?${queryParams.toString()}`);
 
-                if (error) throw error;
+                if (!isMounted) return;
 
                 if (data.length < limit) {
                     setHasMore(false);
                 }
 
-                const formattedData = data.map((page: any) => {
-                    // Get beneficiary from first ad match
-                    // Since we joined via ads!inner, page.ads should be an array of matching ads
-                    const firstAd = Array.isArray(page.ads) ? page.ads[0] : page.ads;
-                    const beneficiary = firstAd?.beneficiary || null;
-
-                    // page_top_creatives is One-to-One object
-                    const rawCreative = Array.isArray(page.page_top_creatives) ? page.page_top_creatives[0] : page.page_top_creatives;
-
-                    const snapshotAd = rawCreative?.ads;
-                    const snapshotUrl = Array.isArray(snapshotAd) ? snapshotAd[0]?.ad_snapshot_url : snapshotAd?.ad_snapshot_url;
-
-                    const top_creative = rawCreative ? {
-                        media_url: rawCreative.media_url,
-                        media_type: rawCreative.media_type ? rawCreative.media_type.toLowerCase() : 'image',
-                        snapshot_url: snapshotUrl
-                    } : null;
-
-                    return {
-                        ...page,
-                        beneficiary,
-                        top_creative,
-                    };
-                });
-
-                setPages(prev => (page === 0 ? formattedData : [...prev, ...formattedData]));
+                setPages(prev => (page === 0 ? data : [...prev, ...data]));
 
             } catch (err: any) {
-                console.error('Error fetching pages:', err);
-                setError(err.message);
+                if (isMounted) {
+                    console.error('Error fetching pages:', err);
+                    setError(err.message);
+                }
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         }
 
         fetchPages();
+
+        return () => {
+            isMounted = false;
+        };
     }, [filters.country, filters.category, filters.searchTerm, filters.status, page, limit]);
 
     return { pages, setPages, loading, error, hasMore };

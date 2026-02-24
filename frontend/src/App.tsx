@@ -5,7 +5,7 @@ import { usePages } from './hooks/usePages';
 import { useCountries } from './hooks/useCountries';
 import { LayoutGrid } from 'lucide-react';
 import { AddSearchTerm } from './components/AddSearchTerm';
-import { supabase } from './lib/supabase';
+import { api } from './lib/api';
 
 import './App.css';
 
@@ -48,12 +48,7 @@ function App() {
 
   const handleStatusChange = async (pageId: string, status: 'saved' | 'deleted' | 'unprocessed') => {
     try {
-      const { error } = await supabase
-        .from('pages')
-        .update({ manual_status: status })
-        .eq('page_id', pageId);
-
-      if (error) throw error;
+      await api.patch(`/pages/${pageId}/status`, { manual_status: status });
 
       // Optimistically remove from current view if it's no longer the active tab
       if (status !== activeTab) {
