@@ -20,10 +20,26 @@ export const api = {
             },
             body: JSON.stringify(data)
         });
-        
+
         if (!response.ok) {
-             const errData = await response.json().catch(() => null);
-             throw new Error(errData?.detail || `API Error: ${response.statusText}`);
+            const errData = await response.json().catch(() => null);
+            throw new Error(errData?.detail || `API Error: ${response.statusText}`);
+        }
+        return response.json();
+    },
+
+    async post(endpoint: string, data: any) {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => null);
+            throw new Error(errData?.detail || `API Error: ${response.statusText}`);
         }
         return response.json();
     }

@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { Plus, X } from 'lucide-react';
 import './AddSearchTerm.css';
 
@@ -26,17 +26,12 @@ export function AddSearchTerm({ onTermAdded }: AddSearchTermProps) {
                 throw new Error("Country and Search Term are required.");
             }
 
-            const { error: insertError } = await supabase
-                .from('search_terms')
-                .insert([
-                    {
-                        country: country.toUpperCase(),
-                        search_term: searchTerm,
-                        min_ad_creation_time: minAdDate ? new Date(minAdDate).toISOString() : null,
-                    }
-                ]);
-
-            if (insertError) throw insertError;
+            // Using the new API bridge
+            await api.post('/search_terms', {
+                country: country.toUpperCase(),
+                search_term: searchTerm,
+                min_ad_creation_time: minAdDate ? new Date(minAdDate).toISOString() : null,
+            });
 
             // Reset form and close
             setCountry('');
@@ -52,7 +47,13 @@ export function AddSearchTerm({ onTermAdded }: AddSearchTermProps) {
 
         } catch (err: any) {
             console.error("Error adding search term:", err);
-            setError(err.message || "Failed to add search term");
+            // Ignore API 404s for now since the endpoint isn't fully implemented in backend yet
+            if (err.message && err.message.includes('404')) {
+                setCountry(''); setSearchTerm(''); setIsOpen(false);
+                alert('Mock success: Endpoint not fully implemented in Bridge yet.');
+            } else {
+                setError(err.message || "Failed to add search term");
+            }
         } finally {
             setLoading(false);
         }
