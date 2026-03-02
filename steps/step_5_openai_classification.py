@@ -72,7 +72,7 @@ def process_upload_batch():
     """Find pending pages, create JSONL file, upload to OpenAI Batch API."""
     conn = get_conn()
     try:
-        pages = fetch_classification_pending_pages(conn, limit=1000)
+        pages = fetch_classification_pending_pages(conn, limit=135)
     finally:
         conn.close()
 
@@ -101,7 +101,7 @@ def process_upload_batch():
                 "method": "POST",
                 "url": "/v1/chat/completions",
                 "body": {
-                    "model": "gpt-4o-mini",
+                    "model": "gpt-4o",
                     "temperature": 0.2,
                     "max_tokens": 4096,
                     "messages": [
@@ -211,7 +211,7 @@ def process_download_batches():
             try:
                 # Download results
                 content = client.files.content(output_file_id).text
-                lines = content.strip().split('\\n')
+                lines = content.strip().split('\n')
                 
                 updates = 0
                 conn = get_conn()
@@ -257,7 +257,7 @@ def process_download_batches():
 def main_sync():
     """Called periodically by pipeline."""
     process_download_batches()
-    # process_upload_batch() # Temporarily disabled for testing
+    process_upload_batch()
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

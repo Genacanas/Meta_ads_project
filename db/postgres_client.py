@@ -30,7 +30,7 @@ UPSERT_AD_SQL = """
 INSERT INTO ads (
     ad_id, page_id, ad_creation_time, ad_delivery_start_time,
     ad_delivery_stop_time, ad_snapshot_url, eu_total_reach,
-    is_active, beneficiary, search_term_id, ad_creative_bodies
+    is_active, beneficiary, search_term_id, description
 )
 VALUES %s
 ON CONFLICT (ad_id)
@@ -44,7 +44,7 @@ DO UPDATE SET
     is_active = EXCLUDED.is_active,
     beneficiary = EXCLUDED.beneficiary,
     search_term_id = EXCLUDED.search_term_id,
-    ad_creative_bodies = EXCLUDED.ad_creative_bodies;
+    description = EXCLUDED.description;
 """
 
 def upsert_pages(conn, pages_data):
@@ -71,7 +71,7 @@ def upsert_ads(conn, ads_data):
             a["ad_delivery_start_time"], a["ad_delivery_stop_time"],
             a["ad_snapshot_url"], a["eu_total_reach"],
             a["is_active"], a["beneficiary"], a.get("search_term_id"),
-            a.get("ad_creative_bodies")
+            a.get("description")
         )
         for a in ads_data
     ]
@@ -167,6 +167,7 @@ def get_active_token(conn):
     - ACTIVE with no cooldown or expired cooldown, OR
     - COOLDOWN with expired cooldown (auto-recovered to ACTIVE on selection)
     - Rotates by last_used_at
+    - HeartBeat: skips tokens used in the last 10 minutes by another thread.
     """
     with conn.cursor() as cur:
         cur.execute("""
@@ -174,6 +175,7 @@ def get_active_token(conn):
             FROM meta_tokens
             WHERE (status = 'ACTIVE' AND (cooldown_until IS NULL OR cooldown_until < NOW()))
                OR (status = 'COOLDOWN' AND cooldown_until < NOW())
+            AND (heartbeat_at IS NULL OR heartbeat_at < NOW() - INTERVAL '10 minutes')
             ORDER BY last_used_at ASC NULLS FIRST
             FOR UPDATE SKIP LOCKED
             LIMIT 1
@@ -186,13 +188,23 @@ def get_active_token(conn):
                 UPDATE meta_tokens
                 SET last_used_at = NOW(),
                     status = 'ACTIVE',
-                    cooldown_until = NULL
+                    cooldown_until = NULL,
+                    heartbeat_at = NOW()
                 WHERE id = %s
             """, (token_id,))
             conn.commit()
             return token
 
     return None
+
+def update_token_heartbeat(conn, token):
+    """Update the heartbeat_at timestamp for a token to signal it's still in use."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            UPDATE meta_tokens SET heartbeat_at = NOW() WHERE token = %s
+        """, (token,))
+    conn.commit()
+
 
 # def report_token_error(conn, token, cooldown_minutes=15):
 #     """
@@ -322,7 +334,7 @@ def fetch_page_ads_bodies(conn, page_id):
     bodies = []
     with conn.cursor() as cur:
         # We fetch all non-null bodies for this page
-        cur.execute("SELECT ad_creative_bodies FROM ads WHERE page_id = %s AND ad_creative_bodies IS NOT NULL", (page_id,))
+        cur.execute("SELECT description FROM ads WHERE page_id = %s AND description IS NOT NULL", (page_id,))
         for row in cur.fetchall():
             try:
                 import json

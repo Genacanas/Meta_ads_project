@@ -16,7 +16,7 @@ export interface PageData {
 }
 
 export function usePages(
-    filters: { country?: string; category?: string; searchTerm?: string; status?: 'unprocessed' | 'saved' | 'deleted' },
+    filters: { country?: string; category?: string; searchTerm?: string; status?: 'unprocessed' | 'saved' | 'deleted'; minReach?: number },
     page: number = 0,
     limit: number = 100
 ) {
@@ -29,7 +29,7 @@ export function usePages(
     useEffect(() => {
         setPages([]);
         setHasMore(true);
-    }, [filters.country, filters.category, filters.searchTerm, filters.status]);
+    }, [filters.country, filters.category, filters.searchTerm, filters.status, filters.minReach]);
 
     useEffect(() => {
         let isMounted = true;
@@ -60,6 +60,10 @@ export function usePages(
                     queryParams.append('searchTerm', filters.searchTerm);
                 }
 
+                if (filters.minReach !== undefined && filters.minReach !== null) {
+                    queryParams.append('min_reach', filters.minReach.toString());
+                }
+
                 const data: PageData[] = await api.get(`/pages?${queryParams.toString()}`);
 
                 if (!isMounted) return;
@@ -87,7 +91,7 @@ export function usePages(
         return () => {
             isMounted = false;
         };
-    }, [filters.country, filters.category, filters.searchTerm, filters.status, page, limit]);
+    }, [filters.country, filters.category, filters.searchTerm, filters.status, filters.minReach, page, limit]);
 
     return { pages, setPages, loading, error, hasMore };
 }

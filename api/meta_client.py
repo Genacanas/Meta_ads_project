@@ -1,7 +1,7 @@
 import requests
 import time
 import logging
-from db.postgres_client import get_conn, get_active_token, mark_token_cooldown, mark_token_invalid
+from db.postgres_client import get_conn, get_active_token, mark_token_cooldown, mark_token_invalid, update_token_heartbeat
 import json
 # from config.settings import META_ACCESS_TOKEN # Removed
 
@@ -54,14 +54,48 @@ def calculate_cooldown_from_headers(response):
         cooldown = int(estimated)
 
         # piso conservador (opcional) inspirado en el C#
-        if max_time > 0:
-            floor = max(1, int((max_time - 90) * 0.1))
+        if max_time > 0 and max_time > 90:
+            floor = max(1, int((max_time - 90) * 10))
             if cooldown < floor:
                 cooldown = floor
 
         return cooldown
     except Exception:
         return None
+
+
+def check_if_token_exhausted(response, token):
+    """
+    Proactive check after a SUCCESSFUL response.
+    If usage >= 90%, rotate token BEFORE hitting a hard rate limit.
+    Mirrors C# CheckIfAccessTokenExhausted.
+    Returns (should_rotate: bool, cooldown_minutes: int)
+    """
+    header_value = response.headers.get("x-business-use-case-usage")
+    if not header_value:
+        return False, 0
+
+    try:
+        header_json = json.loads(header_value)
+        first_key = next(iter(header_json))
+        usage = header_json[first_key][0]
+
+        total_time = usage.get("total_time", 0) or 0
+        total_cputime = usage.get("total_cputime", 0) or 0
+        max_time = max(total_time, total_cputime)
+
+        if max_time >= 90:
+            # (maxTime - 88) * 30 — same formula as C#
+            delay = max(1, int((max_time - 88) * 30))
+            logger.warning(
+                f"Proactive token rotation: usage {max_time}% >= 90%% → cooldown {delay} min"
+            )
+            return True, delay
+    except Exception:
+        pass
+
+    return False, 0
+
 
 
 class MetaClient:
@@ -207,6 +241,26 @@ class MetaClient:
                     all_data.extend(data["data"])
                 
                 page_count += 1
+
+                # Proactive: check if this token is near its usage limit (>=90%)
+                should_rotate, delay = check_if_token_exhausted(response, token)
+                if should_rotate:
+                    conn = get_conn()
+                    try:
+                        mark_token_cooldown(conn, token, minutes=delay)
+                    finally:
+                        conn.close()
+                    token = self._get_token()
+                    if not token:
+                        raise RuntimeError("All tokens exhausted after proactive rotation.")
+
+                # Renew heartbeat so other threads don't steal this token mid-pagination
+                try:
+                    hb_conn = get_conn()
+                    update_token_heartbeat(hb_conn, token)
+                    hb_conn.close()
+                except Exception:
+                    pass
                 
                 # Handle pagination
                 if "paging" in data and "next" in data["paging"]:

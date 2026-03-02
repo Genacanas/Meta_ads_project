@@ -1,4 +1,9 @@
 
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from datetime import datetime
 import logging
 import concurrent.futures
@@ -48,16 +53,9 @@ def process_page_ads(page_record, meta_client, min_date):
         try:
             # Note: MetaClient handles token rotation internally.
             # We assume get_ads_by_page fetches ALL ads (pagination handled inside)
-            # Use country? fetch_ads_pending_pages should maybe return country too?
-            # Let's assume we search all countries or use 'ALL' if not specified.
-            # Meta API often needs country. Let's update fetch_ads_pending_pages to return it.
-            # Assuming page_record has it. For now, let's use ['US', 'ES', 'MX', 'AR', 'CO'] or just try without if possible, 
-            # but usually we need it. 
-            # Wait, get_ads_by_page needs country list.
-            # I need to update fetch_ads_pending_pages to return country.
-            # For now, let's assume 'US' or fetch from DB.
-            # actually we can fetch it.
-            country = page_record[2] if len(page_record) > 2 else 'US' 
+            # User wants to fetch by the specific country registered for the page.
+            # We updated fetch_ads_pending_pages to return (page_id, name, country).
+            country = page_record[2] if len(page_record) > 2 and page_record[2] else 'DE' # Fallback to DE if null 
             
             page_ads = meta_client.get_ads_by_page(page_id, [country], limit=100)
         except Exception as e:
@@ -109,12 +107,12 @@ def process_page_ads(page_record, meta_client, min_date):
                         beneficiary = bp["beneficiary"]
                         break
                         
-            # Extract ad_creative_bodies and convert to JSON string
+            # Extract ad description (ad_creative_bodies from API) and convert to JSON string
             import json
-            ad_creative_bodies_val = None
+            description_val = None
             if ad.get("ad_creative_bodies"):
                 try:
-                    ad_creative_bodies_val = json.dumps(ad.get("ad_creative_bodies"))
+                    description_val = json.dumps(ad.get("ad_creative_bodies"))
                 except Exception:
                     pass
 
@@ -130,7 +128,7 @@ def process_page_ads(page_record, meta_client, min_date):
                 "is_active": is_active,
                 "beneficiary": beneficiary,
                 "search_term_id": None,
-                "ad_creative_bodies": ad_creative_bodies_val
+                "description": description_val
             })
 
         # Insert Ads
@@ -154,7 +152,7 @@ def process_page_ads(page_record, meta_client, min_date):
              # Mark COMPLETED and trigger MEDIA PENDING if ads found
              if ads_to_upsert:
                  mark_page_status(conn, page_id, 'ads_status', 'completed')
-                 mark_page_status(conn, page_id, 'media_status', 'pending')
+                 # mark_page_status(conn, page_id, 'media_status', 'pending')  # TEMP: disabled to avoid re-triggering Step 4
                  logger.info(f"Page {page_id}: Ads processed. Active Reach: {active_total_eu_reach_sum}. Media Pending.")
              else:
                  mark_page_status(conn, page_id, 'ads_status', 'not_found')

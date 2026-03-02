@@ -21,7 +21,13 @@ function App() {
 
   // Pass filters to hook
   const { pages, setPages, loading, error, hasMore } = usePages(
-    { country: selectedCountry, category: selectedCategory, searchTerm, status: activeTab },
+    {
+      country: selectedCountry,
+      category: selectedCategory,
+      searchTerm,
+      status: activeTab,
+      minReach: filterReach ? 900000 : 200000
+    },
     page
   );
 
@@ -70,11 +76,7 @@ function App() {
     );
   }
 
-  const filteredPages = pages.filter(page => {
-    // Client-side filtering for reach (optional, as we might want to do this in DB too later)
-    if (filterReach && page.total_eu_reach < 900000) return false;
-    return true;
-  });
+  const filteredPages = pages; // Filtering is now handled on the server
 
   const handleLoadMore = () => {
     setPage(prev => prev + 1);
@@ -170,7 +172,7 @@ function App() {
               ))}
             </div>
 
-            {hasMore && filteredPages.length > 0 && (
+            {hasMore && (
               <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
                 <button
                   onClick={handleLoadMore}
