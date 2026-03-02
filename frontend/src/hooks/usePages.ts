@@ -25,11 +25,13 @@ export function usePages(
     const [error, setError] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(true);
 
+    const { country, category, searchTerm, status, minReach } = filters;
+
     // Reset pages when filters change (except pagination)
     useEffect(() => {
         setPages([]);
         setHasMore(true);
-    }, [filters.country, filters.category, filters.searchTerm, filters.status, filters.minReach]);
+    }, [country, category, searchTerm, status, minReach]);
 
     useEffect(() => {
         let isMounted = true;
@@ -39,7 +41,7 @@ export function usePages(
                 setLoading(true);
                 setError(null);
 
-                const currentStatus = filters.status || 'unprocessed';
+                const currentStatus = status || 'unprocessed';
 
                 // Build the query parameter string
                 const queryParams = new URLSearchParams({
@@ -48,20 +50,20 @@ export function usePages(
                     offset: (page * limit).toString()
                 });
 
-                if (filters.country && filters.country !== 'All') {
-                    queryParams.append('country', filters.country);
+                if (country && country !== 'All') {
+                    queryParams.append('country', country);
                 }
 
-                if (filters.category && filters.category !== 'All') {
-                    queryParams.append('category', filters.category);
+                if (category && category !== 'All') {
+                    queryParams.append('category', category);
                 }
 
-                if (filters.searchTerm) {
-                    queryParams.append('searchTerm', filters.searchTerm);
+                if (searchTerm) {
+                    queryParams.append('searchTerm', searchTerm);
                 }
 
-                if (filters.minReach !== undefined && filters.minReach !== null) {
-                    queryParams.append('min_reach', filters.minReach.toString());
+                if (minReach !== undefined && minReach !== null) {
+                    queryParams.append('min_reach', minReach.toString());
                 }
 
                 const data: PageData[] = await api.get(`/pages?${queryParams.toString()}`);
@@ -91,7 +93,7 @@ export function usePages(
         return () => {
             isMounted = false;
         };
-    }, [filters.country, filters.category, filters.searchTerm, filters.status, filters.minReach, page, limit]);
+    }, [country, category, searchTerm, status, minReach, page, limit]);
 
     return { pages, setPages, loading, error, hasMore };
 }

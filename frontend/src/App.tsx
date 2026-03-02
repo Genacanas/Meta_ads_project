@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { FilterBar } from './components/FilterBar';
 import { AdCard } from './components/AdCard';
 import { usePages } from './hooks/usePages';
@@ -19,15 +19,17 @@ function App() {
 
   const { countries } = useCountries();
 
+  const memoizedFilters = useMemo(() => ({
+    country: selectedCountry,
+    category: selectedCategory,
+    searchTerm,
+    status: activeTab,
+    minReach: filterReach ? 900000 : 200000
+  }), [selectedCountry, selectedCategory, searchTerm, activeTab, filterReach]);
+
   // Pass filters to hook
   const { pages, setPages, loading, error, hasMore } = usePages(
-    {
-      country: selectedCountry,
-      category: selectedCategory,
-      searchTerm,
-      status: activeTab,
-      minReach: filterReach ? 900000 : 200000
-    },
+    memoizedFilters,
     page
   );
 
