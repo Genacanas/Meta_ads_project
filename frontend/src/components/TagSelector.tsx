@@ -64,12 +64,25 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
 
     const handleCreateTag = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newTagName.trim()) return;
+        const trimmedName = newTagName.trim();
+        if (!trimmedName) return;
+
+        // Validation: Verify if it already exists (case-insensitive)
+        const existingTag = tags.find(t => t.Name.toLowerCase() === trimmedName.toLowerCase());
+        if (existingTag) {
+            alert("A tag with this name already exists in the list.");
+            return;
+        }
 
         try {
             setIsCreating(true);
-            const newTag = await api.post('/tags', { name: newTagName.trim() });
-            setTags([...tags, newTag]);
+            const newTag = await api.post('/tags', { name: trimmedName });
+
+            // Protect against adding duplicates to state if API returned existing
+            const isAlreadyInList = tags.some(t => t.Id === newTag.Id);
+            if (!isAlreadyInList) {
+                setTags([...tags, newTag]);
+            }
 
             // Automatically select it after creation
             await handleSelectTag(newTag);
