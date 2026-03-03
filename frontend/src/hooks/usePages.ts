@@ -8,6 +8,8 @@ export interface PageData {
     total_eu_reach: number;
     manual_status: string; // New field for approval workflow ('unprocessed', 'saved', 'deleted')
     beneficiary?: string;
+    tag?: string;
+    tagId?: number;
     top_creative?: {
         media_url: string;
         media_type: 'image' | 'video';

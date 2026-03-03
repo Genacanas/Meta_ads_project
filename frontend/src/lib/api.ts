@@ -42,5 +42,17 @@ export const api = {
             throw new Error(errData?.detail || `API Error: ${response.statusText}`);
         }
         return response.json();
+    },
+
+    async delete(endpoint: string) {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => null);
+            throw new Error(errData?.detail || `API Error: ${response.statusText}`);
+        }
+        return response.json();
     }
 };

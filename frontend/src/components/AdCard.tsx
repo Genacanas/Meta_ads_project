@@ -1,5 +1,7 @@
-import { X, Check, RotateCcw } from 'lucide-react';
+import { X, Check, RotateCcw, Tag as TagIcon } from 'lucide-react';
 import styles from './AdCard.module.css';
+import { TagSelector } from './TagSelector';
+import { useState } from 'react';
 
 interface AdCardProps {
     pageId: string;
@@ -9,7 +11,10 @@ interface AdCardProps {
     mediaUrl?: string;
     mediaType?: 'image' | 'video';
     snapshotUrl?: string;
+    tagId?: number;
+    tagName?: string;
     onStatusChange?: (pageId: string, status: 'saved' | 'deleted' | 'unprocessed') => void;
+    onTagUpdate?: (pageId: string, newTagId: number | null, newTagName: string | null) => void;
     currentTab?: 'unprocessed' | 'saved' | 'deleted';
 }
 
@@ -21,9 +26,13 @@ export function AdCard({
     mediaUrl,
     mediaType,
     snapshotUrl,
+    tagId,
+    tagName,
     onStatusChange,
+    onTagUpdate,
     currentTab = 'unprocessed'
 }: AdCardProps) {
+    const [isTagModalOpen, setIsTagModalOpen] = useState(false);
     const formattedReach = new Intl.NumberFormat('en-US', {
         notation: "compact",
         compactDisplay: "short"
@@ -52,10 +61,27 @@ export function AdCard({
                         </a>
                     </h3>
                 </div>
-                <div className={styles.actionRow}>
+                <div className={styles.actionRow} style={{ marginTop: '8px' }}>
                     <div className={styles.infoCol}>
                         <span className={styles.reach}>{formattedReach}</span>
-                        <p className={styles.beneficiary}>{beneficiary}</p>
+                        {beneficiary && <p className={styles.beneficiary}>{beneficiary}</p>}
+
+                        {/* Tag Button Segment */}
+                        <div style={{ marginTop: '6px' }}>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setIsTagModalOpen(true); }}
+                                style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                    border: '1px dashed #cbd5e1', borderRadius: '12px', padding: '4px 8px',
+                                    fontSize: '11px', fontWeight: '500', background: tagName ? '#e0f2fe' : 'transparent',
+                                    color: tagName ? '#0369a1' : '#64748b', cursor: 'pointer',
+                                    borderColor: tagName ? '#bae6fd' : '#cbd5e1',
+                                }}
+                            >
+                                <TagIcon size={12} />
+                                {tagName || '+ Tag'}
+                            </button>
+                        </div>
                     </div>
                     <div className={styles.buttonGroup}>
                         {currentTab !== 'unprocessed' && (
@@ -109,6 +135,17 @@ export function AdCard({
                     <div className={styles.placeholder}>No Media</div>
                 )}
             </div>
+
+            <TagSelector
+                isOpen={isTagModalOpen}
+                onClose={() => setIsTagModalOpen(false)}
+                currentTagId={tagId}
+                currentTagName={tagName}
+                pageId={pageId}
+                onTagUpdate={(newTagId, newTagName) => {
+                    if (onTagUpdate) onTagUpdate(pageId, newTagId, newTagName);
+                }}
+            />
         </div>
     );
 }

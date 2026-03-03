@@ -68,6 +68,15 @@ function App() {
     }
   };
 
+  const handleTagUpdate = (pageId: string, newTagId: number | null, newTagName: string | null) => {
+    setPages((prev: any[]) => prev.map((p: any) => {
+      if (p.page_id === pageId) {
+        return { ...p, tagId: newTagId, tag: newTagName };
+      }
+      return p;
+    }));
+  };
+
   // We removed the full-screen loading early return.
 
   if (error) {
@@ -168,7 +177,10 @@ function App() {
                   mediaUrl={page.top_creative?.media_url}
                   mediaType={page.top_creative?.media_type}
                   snapshotUrl={page.top_creative?.snapshot_url}
+                  tagId={page.tagId}
+                  tagName={page.tag}
                   onStatusChange={handleStatusChange}
+                  onTagUpdate={handleTagUpdate}
                   currentTab={activeTab}
                 />
               ))}
