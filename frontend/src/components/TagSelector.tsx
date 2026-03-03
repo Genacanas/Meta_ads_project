@@ -107,7 +107,7 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
         <div style={overlayStyle} onClick={onClose}>
             <div style={modalStyle} onClick={e => e.stopPropagation()}>
                 <div style={headerStyle}>
-                    <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: '#111827' }}>
                         <TagIcon size={18} /> Select Tag
                     </h3>
                     <button onClick={onClose} style={closeBtnStyle}><X size={20} /></button>
@@ -151,7 +151,16 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
                                     style={tagItemStyle(tag.Id === currentTagId)}
                                     onClick={() => handleSelectTag(tag)}
                                 >
-                                    <span style={{ flex: 1, fontWeight: tag.Id === currentTagId ? 'bold' : 'normal' }}>
+                                    <span
+                                        style={{
+                                            flex: 1,
+                                            fontWeight: tag.Id === currentTagId ? 'bold' : 'normal',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                        title={tag.Name}
+                                    >
                                         {tag.Name}
                                     </span>
                                     <button
@@ -178,7 +187,7 @@ const overlayStyle: React.CSSProperties = {
     display: 'flex', alignItems: 'center', justifyContent: 'center'
 };
 const modalStyle: React.CSSProperties = {
-    backgroundColor: '#fff', borderRadius: '8px', width: '300px',
+    backgroundColor: '#fff', borderRadius: '8px', width: '480px',
     boxShadow: '0 4px 6px rgba(0,0,0,0.1)', overflow: 'hidden',
     display: 'flex', flexDirection: 'column', maxHeight: '80vh'
 };
@@ -216,14 +225,15 @@ const addBtnStyle: React.CSSProperties = {
     padding: '0 12px', cursor: 'pointer', display: 'flex', alignItems: 'center'
 };
 const listStyle: React.CSSProperties = {
-    display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto', maxHeight: '200px'
+    display: 'flex', flexWrap: 'wrap', gap: '8px', overflowY: 'auto', maxHeight: '250px'
 };
 const tagItemStyle = (isActive: boolean): React.CSSProperties => ({
-    display: 'flex', alignItems: 'center', padding: '8px 12px', borderRadius: '4px',
-    backgroundColor: isActive ? '#e0f2fe' : 'transparent', // Light blue background
-    color: isActive ? '#0369a1' : 'inherit', // Dark blue text
-    cursor: 'pointer', fontSize: '14px', border: '1px solid',
-    borderColor: isActive ? '#bae6fd' : 'transparent',
+    display: 'flex', alignItems: 'center', padding: '6px 10px', borderRadius: '4px',
+    width: 'calc(33.333% - 6px)', boxSizing: 'border-box',
+    backgroundColor: isActive ? '#e0f2fe' : '#ffffff', // Light blue background when active
+    color: isActive ? '#0369a1' : '#1f2937', // Dark blue text when active, solid dark gray otherwise
+    cursor: 'pointer', fontSize: '13px', border: '1px solid',
+    borderColor: isActive ? '#bae6fd' : '#e5e7eb',
     transition: 'background-color 0.2s, color 0.2s'
 });
 const trashBtnStyle: React.CSSProperties = {
