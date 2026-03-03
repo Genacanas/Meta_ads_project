@@ -220,10 +220,11 @@ const listStyle: React.CSSProperties = {
 };
 const tagItemStyle = (isActive: boolean): React.CSSProperties => ({
     display: 'flex', alignItems: 'center', padding: '8px 12px', borderRadius: '4px',
-    backgroundColor: isActive ? '#f0f9ff' : 'transparent',
+    backgroundColor: isActive ? '#e0f2fe' : 'transparent', // Light blue background
+    color: isActive ? '#0369a1' : 'inherit', // Dark blue text
     cursor: 'pointer', fontSize: '14px', border: '1px solid',
     borderColor: isActive ? '#bae6fd' : 'transparent',
-    transition: 'background-color 0.2s'
+    transition: 'background-color 0.2s, color 0.2s'
 });
 const trashBtnStyle: React.CSSProperties = {
     background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer',
