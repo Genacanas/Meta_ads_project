@@ -29,6 +29,16 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
         }
     }, [isOpen]);
 
+    // Auto-hide error message after 5 seconds
+    useEffect(() => {
+        if (errorMsg) {
+            const timer = setTimeout(() => {
+                setErrorMsg(null);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [errorMsg]);
+
     const fetchTags = async () => {
         try {
             setLoading(true);
@@ -143,7 +153,7 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
                     )}
 
                     <form onSubmit={handleCreateTag} style={createFormStyle}>
-                        <div style={{ flex: 1, position: 'relative' }}>
+                        <div style={{ flex: 1 }}>
                             <input
                                 type="text"
                                 placeholder="Add new tag..."
@@ -154,11 +164,6 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
                                 }}
                                 style={inputStyle}
                             />
-                            {errorMsg && (
-                                <div style={errorBannerStyle}>
-                                    {errorMsg}
-                                </div>
-                            )}
                         </div>
                         <button type="submit" disabled={isCreating || !newTagName.trim()} style={addBtnStyle}>
                             <Plus size={18} />
@@ -202,6 +207,13 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
                     </div>
                 </div>
             </div>
+
+            {/* Global Error Toast */}
+            {errorMsg && (
+                <div style={globalErrorToastStyle}>
+                    {errorMsg}
+                </div>
+            )}
         </div>
     );
 }
@@ -266,8 +278,10 @@ const trashBtnStyle: React.CSSProperties = {
     background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer',
     padding: '4px', display: 'flex', alignItems: 'center', opacity: 0.7
 };
-const errorBannerStyle: React.CSSProperties = {
-    position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
-    backgroundColor: '#fee2e2', color: '#b91c1c', fontSize: '11px', fontWeight: '500',
-    padding: '4px 8px', borderRadius: '4px', border: '1px solid #fca5a5', zIndex: 10
+const globalErrorToastStyle: React.CSSProperties = {
+    position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)',
+    backgroundColor: '#fee2e2', color: '#b91c1c', fontSize: '14px', fontWeight: '500',
+    padding: '12px 24px', borderRadius: '8px', border: '1px solid #fca5a5',
+    zIndex: 9999, boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+    animation: 'slideDown 0.3s ease-out'
 };
