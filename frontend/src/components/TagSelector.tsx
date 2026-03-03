@@ -21,6 +21,7 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
     const [loading, setLoading] = useState(false);
     const [newTagName, setNewTagName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -64,13 +65,15 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
 
     const handleCreateTag = async (e: React.FormEvent) => {
         e.preventDefault();
+        setErrorMsg(null);
+
         const trimmedName = newTagName.trim();
         if (!trimmedName) return;
 
         // Validation: Verify if it already exists (case-insensitive)
         const existingTag = tags.find(t => t.Name.toLowerCase() === trimmedName.toLowerCase());
         if (existingTag) {
-            alert("A tag with this name already exists in the list.");
+            setErrorMsg("A tag with this name already exists.");
             return;
         }
 
@@ -90,7 +93,7 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
             setNewTagName('');
         } catch (error) {
             console.error("Failed to create tag", error);
-            alert("Error creating tag. May already exist.");
+            setErrorMsg("Error creating tag. May already exist.");
         } finally {
             setIsCreating(false);
         }
@@ -140,13 +143,23 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
                     )}
 
                     <form onSubmit={handleCreateTag} style={createFormStyle}>
-                        <input
-                            type="text"
-                            placeholder="Add new tag..."
-                            value={newTagName}
-                            onChange={(e) => setNewTagName(e.target.value)}
-                            style={inputStyle}
-                        />
+                        <div style={{ flex: 1, position: 'relative' }}>
+                            <input
+                                type="text"
+                                placeholder="Add new tag..."
+                                value={newTagName}
+                                onChange={(e) => {
+                                    setNewTagName(e.target.value);
+                                    if (errorMsg) setErrorMsg(null); // Clear error when typing
+                                }}
+                                style={inputStyle}
+                            />
+                            {errorMsg && (
+                                <div style={errorBannerStyle}>
+                                    {errorMsg}
+                                </div>
+                            )}
+                        </div>
                         <button type="submit" disabled={isCreating || !newTagName.trim()} style={addBtnStyle}>
                             <Plus size={18} />
                         </button>
@@ -252,4 +265,9 @@ const tagItemStyle = (isActive: boolean): React.CSSProperties => ({
 const trashBtnStyle: React.CSSProperties = {
     background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer',
     padding: '4px', display: 'flex', alignItems: 'center', opacity: 0.7
+};
+const errorBannerStyle: React.CSSProperties = {
+    position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+    backgroundColor: '#fee2e2', color: '#b91c1c', fontSize: '11px', fontWeight: '500',
+    padding: '4px 8px', borderRadius: '4px', border: '1px solid #fca5a5', zIndex: 10
 };
