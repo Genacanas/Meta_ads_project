@@ -1,7 +1,8 @@
-import { X, Check, RotateCcw, Tag as TagIcon } from 'lucide-react';
+import { X, Check, RotateCcw, Tag as TagIcon, Brain, Loader2 } from 'lucide-react';
 import styles from './AdCard.module.css';
 import { TagSelector } from './TagSelector';
 import { useState } from 'react';
+import { api } from '../lib/api';
 
 interface AdCardProps {
     pageId: string;
@@ -33,6 +34,11 @@ export function AdCard({
     currentTab = 'unprocessed'
 }: AdCardProps) {
     const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+    const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
+    const [explanationText, setExplanationText] = useState("");
+    const [isExplanationLoading, setIsExplanationLoading] = useState(false);
+    const [explanationError, setExplanationError] = useState("");
+
     const formattedReach = new Intl.NumberFormat('en-US', {
         notation: "compact",
         compactDisplay: "short"
@@ -44,11 +50,28 @@ export function AdCard({
         }
     };
 
+    const handleExplainClick = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsExplainModalOpen(true);
+        if (explanationText) return; // Note refetch if already fetched
+
+        setIsExplanationLoading(true);
+        setExplanationError("");
+        try {
+            const data = await api.post('/explain_company', { page_name: pageName });
+            setExplanationText(data.explanation);
+        } catch (err: any) {
+            setExplanationError(err.message || "Failed to fetch explanation.");
+        } finally {
+            setIsExplanationLoading(false);
+        }
+    };
+
     return (
         <div className={styles.card} onClick={handleCardClick} style={{ cursor: snapshotUrl ? 'pointer' : 'default' }}>
             {/* Header info */}
             <div className={styles.header}>
-                <div className={styles.titleRow}>
+                <div className={styles.titleRow} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <h3 className={styles.pageName}>
                         <a
                             href={`https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=ALL&is_targeted_country=false&media_type=all&search_type=page&view_all_page_id=${pageId}`}
@@ -60,6 +83,14 @@ export function AdCard({
                             {pageName}
                         </a>
                     </h3>
+                    <button
+                        onClick={handleExplainClick}
+                        className={styles.actionBtn}
+                        title="What does this company do?"
+                        style={{ marginLeft: '8px', color: '#6366f1', background: 'none', border: '1px solid #e2e8f0', borderRadius: '50%', padding: '6px', cursor: 'pointer' }}
+                    >
+                        <Brain size={18} />
+                    </button>
                 </div>
                 <div className={styles.actionRow} style={{ marginTop: '8px' }}>
                     <div className={styles.infoCol}>
@@ -146,6 +177,56 @@ export function AdCard({
                     if (onTagUpdate) onTagUpdate(pageId, newTagId, newTagName);
                 }}
             />
+
+            {isExplainModalOpen && (
+                <div
+                    style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'default'
+                    }}
+                    onClick={(e) => { e.stopPropagation(); setIsExplainModalOpen(false); }}
+                >
+                    <div
+                        style={{
+                            background: 'white', padding: '24px', borderRadius: '12px',
+                            width: '400px', maxWidth: '90%', position: 'relative',
+                            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setIsExplainModalOpen(false); }}
+                            style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                        >
+                            <X size={20} />
+                        </button>
+                        <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', color: '#0f172a', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                            <Brain size={24} color="#6366f1" style={{ flexShrink: 0, marginTop: '2px' }} />
+                            <div>
+                                <span style={{ fontSize: '14px', color: '#64748b', fontWeight: '500', display: 'block', marginBottom: '4px' }}>What does this company do:</span>
+                                {pageName}
+                            </div>
+                        </h3>
+                        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                            {isExplanationLoading ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', justifyContent: 'center', padding: '12px 0' }}>
+                                    <Loader2 size={20} style={{ animation: 'spin 1.5s linear infinite' }} />
+                                    <span>Asking ChatGPT...</span>
+                                    <style>{`
+                                        @keyframes spin { 100% { transform: rotate(360deg); } }
+                                    `}</style>
+                                </div>
+                            ) : explanationError ? (
+                                <div style={{ color: '#ef4444', textAlign: 'center', padding: '12px 0' }}>{explanationError}</div>
+                            ) : (
+                                <p style={{ margin: 0, color: '#334155', lineHeight: '1.6', fontSize: '15px' }}>{explanationText}</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
