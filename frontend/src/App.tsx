@@ -55,16 +55,22 @@ function App() {
   };
 
   const handleStatusChange = async (pageId: string, status: 'saved' | 'deleted' | 'unprocessed') => {
-    try {
-      await api.patch(`/pages/${pageId}/status`, { manual_status: status });
+    // Save previous state for rollback
+    const previousPages = [...pages];
 
-      // Optimistically remove from current view if it's no longer the active tab
-      if (status !== activeTab) {
-        setPages((prev: any[]) => prev.filter((p: any) => p.page_id !== pageId));
-      }
+    // Optimistically remove from current view if it's no longer the active tab
+    if (status !== activeTab) {
+      setPages((prev: any[]) => prev.filter((p: any) => p.page_id !== pageId));
+    }
+
+    try {
+      // Background request
+      await api.patch(`/pages/${pageId}/status`, { manual_status: status });
     } catch (err) {
       console.error("Failed to update status", err);
-      alert("Failed to update status");
+      alert("Failed to update status. Reverting changes.");
+      // Rollback on failure
+      setPages(previousPages);
     }
   };
 

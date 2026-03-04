@@ -52,24 +52,32 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
     };
 
     const handleSelectTag = async (tag: Tag) => {
+        // Optimistic UI Update
+        onTagUpdate(tag.Id, tag.Name);
+        onClose();
+
         try {
             await api.patch(`/pages/${pageId}/tag`, { tagId: tag.Id, tagName: tag.Name });
-            onTagUpdate(tag.Id, tag.Name);
-            onClose();
         } catch (error) {
             console.error("Failed to update page tag", error);
-            alert("Error updating tag.");
+            // Rollback on failure
+            onTagUpdate(currentTagId || null, currentTagName || null);
+            setErrorMsg("Error updating tag. Reverted automatically.");
         }
     };
 
     const handleClearTag = async () => {
+        // Optimistic UI Update
+        onTagUpdate(null, null);
+        onClose();
+
         try {
             await api.patch(`/pages/${pageId}/tag`, { tagId: null, tagName: null });
-            onTagUpdate(null, null);
-            onClose();
         } catch (error) {
             console.error("Failed to clear page tag", error);
-            alert("Error clearing tag.");
+            // Rollback on failure
+            onTagUpdate(currentTagId || null, currentTagName || null);
+            setErrorMsg("Error clearing tag. Reverted automatically.");
         }
     };
 
@@ -113,17 +121,25 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
         e.stopPropagation();
         if (!confirm("Are you sure you want to completely delete this tag from the system?")) return;
 
+        // Optimistic UI updates
+        const previousTags = [...tags];
+        setTags(tags.filter(t => t.Id !== tagId));
+
+        const hadTag = currentTagId === tagId;
+        if (hadTag) {
+            onTagUpdate(null, null);
+        }
+
         try {
             await api.delete(`/tags/${tagId}`);
-            setTags(tags.filter(t => t.Id !== tagId));
-
-            // If the local page had this tag, visually clear it too
-            if (currentTagId === tagId) {
-                onTagUpdate(null, null);
-            }
         } catch (error) {
             console.error("Failed to delete tag", error);
-            alert("Error deleting tag.");
+            // Rollback
+            setTags(previousTags);
+            if (hadTag) {
+                onTagUpdate(currentTagId || null, currentTagName || null);
+            }
+            setErrorMsg("Error deleting tag from system. Reverted.");
         }
     };
 

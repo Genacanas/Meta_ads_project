@@ -51,7 +51,7 @@ export function AdCard({
                 <div className={styles.titleRow}>
                     <h3 className={styles.pageName}>
                         <a
-                            href={`https://www.facebook.com/${pageId}`}
+                            href={`https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=ALL&is_targeted_country=false&media_type=all&search_type=page&view_all_page_id=${pageId}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
