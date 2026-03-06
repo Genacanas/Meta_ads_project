@@ -6,7 +6,9 @@ export interface PageData {
     name: string;
     country: string;
     total_eu_reach: number;
-    manual_status: string; // New field for approval workflow ('unprocessed', 'saved', 'deleted')
+    active_eu_total_reach?: number;
+    active_ads_count?: number;
+    manual_status: string;
     beneficiary?: string;
     tag?: string;
     tagId?: number;

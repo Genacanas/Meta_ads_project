@@ -9,6 +9,8 @@ interface AdCardProps {
     pageName: string;
     beneficiary?: string;
     totalReach: number;
+    activeReach?: number;
+    activeAdsCount?: number;
     mediaUrl?: string;
     mediaType?: 'image' | 'video';
     snapshotUrl?: string;
@@ -24,6 +26,8 @@ export function AdCard({
     pageName,
     beneficiary,
     totalReach,
+    activeReach,
+    activeAdsCount,
     mediaUrl,
     mediaType,
     snapshotUrl,
@@ -43,6 +47,10 @@ export function AdCard({
         notation: "compact",
         compactDisplay: "short"
     }).format(totalReach);
+
+    const formattedActiveReach = activeReach != null
+        ? new Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(activeReach)
+        : null;
 
     const handleCardClick = () => {
         if (snapshotUrl) {
@@ -95,6 +103,33 @@ export function AdCard({
                 <div className={styles.actionRow} style={{ marginTop: '8px' }}>
                     <div className={styles.infoCol}>
                         <span className={styles.reach}>{formattedReach}</span>
+                        {/* Active reach & ad count badges */}
+                        {(formattedActiveReach != null || activeAdsCount != null) && (
+                            <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                                {formattedActiveReach != null && (
+                                    <span style={{
+                                        display: 'inline-flex', alignItems: 'center', gap: '3px',
+                                        background: '#dcfce7', color: '#15803d',
+                                        fontSize: '11px', fontWeight: '600',
+                                        borderRadius: '8px', padding: '2px 7px',
+                                        border: '1px solid #bbf7d0'
+                                    }}>
+                                        ▶ {formattedActiveReach}
+                                    </span>
+                                )}
+                                {activeAdsCount != null && (
+                                    <span style={{
+                                        display: 'inline-flex', alignItems: 'center', gap: '3px',
+                                        background: '#f0f9ff', color: '#0369a1',
+                                        fontSize: '11px', fontWeight: '600',
+                                        borderRadius: '8px', padding: '2px 7px',
+                                        border: '1px solid #bae6fd'
+                                    }}>
+                                        {activeAdsCount} ads
+                                    </span>
+                                )}
+                            </div>
+                        )}
                         {beneficiary && <p className={styles.beneficiary}>{beneficiary}</p>}
 
                         {/* Tag Button Segment */}

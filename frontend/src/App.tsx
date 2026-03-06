@@ -192,6 +192,8 @@ function App() {
                   pageName={page.name}
                   beneficiary={page.beneficiary}
                   totalReach={page.total_eu_reach}
+                  activeReach={page.active_eu_total_reach}
+                  activeAdsCount={page.active_ads_count}
                   mediaUrl={page.top_creative?.media_url}
                   mediaType={page.top_creative?.media_type}
                   snapshotUrl={page.top_creative?.snapshot_url}
