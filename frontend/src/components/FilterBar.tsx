@@ -1,12 +1,16 @@
 import { Search, SlidersHorizontal } from 'lucide-react';
 import styles from './FilterBar.module.css';
-import { PAGE_CATEGORIES } from '../constants'; // Import categories
+import { PAGE_CATEGORIES } from '../constants';
+import type { Tag } from '../hooks/useTags';
 
 interface FilterBarProps {
     selectedCountry: string;
     onCountryChange: (country: string) => void;
-    selectedCategory: string; // New prop
-    onCategoryChange: (category: string) => void; // New prop
+    selectedCategory: string;
+    onCategoryChange: (category: string) => void;
+    selectedTag: string;
+    onTagChange: (tag: string) => void;
+    availableTags: Tag[];
     onReachChange: (enabled: boolean) => void;
     searchTerm: string;
     onSearchChange: (term: string) => void;
@@ -19,6 +23,9 @@ export function FilterBar({
     onCountryChange,
     selectedCategory,
     onCategoryChange,
+    selectedTag,
+    onTagChange,
+    availableTags,
     onReachChange,
     searchTerm,
     onSearchChange,
@@ -50,6 +57,19 @@ export function FilterBar({
                         <option value="All">All Categories</option>
                         {PAGE_CATEGORIES.map(category => (
                             <option key={category} value={category}>{category}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className={styles.selectWrapper}>
+                    <select
+                        className={styles.select}
+                        value={selectedTag}
+                        onChange={(e) => onTagChange(e.target.value)}
+                    >
+                        <option value="All">All Tags</option>
+                        {availableTags.map(tag => (
+                            <option key={tag.Id} value={tag.Name}>{tag.Name}</option>
                         ))}
                     </select>
                 </div>

@@ -18,7 +18,7 @@ export interface PageData {
 }
 
 export function usePages(
-    filters: { country?: string; category?: string; searchTerm?: string; status?: 'unprocessed' | 'saved' | 'deleted'; minReach?: number },
+    filters: { country?: string; category?: string; searchTerm?: string; status?: 'unprocessed' | 'saved' | 'deleted'; minReach?: number; tag?: string },
     page: number = 0,
     limit: number = 100
 ) {
@@ -27,13 +27,13 @@ export function usePages(
     const [error, setError] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(true);
 
-    const { country, category, searchTerm, status, minReach } = filters;
+    const { country, category, searchTerm, status, minReach, tag } = filters;
 
     // Reset pages when filters change (except pagination)
     useEffect(() => {
         setPages([]);
         setHasMore(true);
-    }, [country, category, searchTerm, status, minReach]);
+    }, [country, category, searchTerm, status, minReach, tag]);
 
     useEffect(() => {
         let isMounted = true;
@@ -68,6 +68,10 @@ export function usePages(
                     queryParams.append('min_reach', minReach.toString());
                 }
 
+                if (tag && tag !== 'All') {
+                    queryParams.append('tag', tag);
+                }
+
                 const data: PageData[] = await api.get(`/pages?${queryParams.toString()}`);
 
                 if (!isMounted) return;
@@ -95,7 +99,7 @@ export function usePages(
         return () => {
             isMounted = false;
         };
-    }, [country, category, searchTerm, status, minReach, page, limit]);
+    }, [country, category, searchTerm, status, minReach, tag, page, limit]);
 
     return { pages, setPages, loading, error, hasMore };
 }

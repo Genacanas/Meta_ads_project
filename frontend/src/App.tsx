@@ -3,6 +3,7 @@ import { FilterBar } from './components/FilterBar';
 import { AdCard } from './components/AdCard';
 import { usePages } from './hooks/usePages';
 import { useCountries } from './hooks/useCountries';
+import { useTags } from './hooks/useTags';
 import { LayoutGrid } from 'lucide-react';
 import { AddSearchTerm } from './components/AddSearchTerm';
 import { api } from './lib/api';
@@ -11,21 +12,24 @@ import './App.css';
 
 function App() {
   const [selectedCountry, setSelectedCountry] = useState('All');
-  const [selectedCategory, setSelectedCategory] = useState('All'); // New state
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedTag, setSelectedTag] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterReach, setFilterReach] = useState(false);
   const [activeTab, setActiveTab] = useState<'unprocessed' | 'saved' | 'deleted'>('unprocessed');
   const [page, setPage] = useState(0);
 
   const { countries } = useCountries();
+  const { tags } = useTags();
 
   const memoizedFilters = useMemo(() => ({
     country: selectedCountry,
     category: selectedCategory,
+    tag: selectedTag,
     searchTerm,
     status: activeTab,
     minReach: filterReach ? 900000 : 200000
-  }), [selectedCountry, selectedCategory, searchTerm, activeTab, filterReach]);
+  }), [selectedCountry, selectedCategory, selectedTag, searchTerm, activeTab, filterReach]);
 
   // Pass filters to hook
   const { pages, setPages, loading, error, hasMore } = usePages(
@@ -41,6 +45,11 @@ function App() {
 
   const handleCategoryChange = (c: string) => {
     setSelectedCategory(c);
+    setPage(0);
+  };
+
+  const handleTagChange = (t: string) => {
+    setSelectedTag(t);
     setPage(0);
   };
 
@@ -157,6 +166,9 @@ function App() {
         onCountryChange={handleCountryChange}
         selectedCategory={selectedCategory}
         onCategoryChange={handleCategoryChange}
+        selectedTag={selectedTag}
+        onTagChange={handleTagChange}
+        availableTags={tags}
         onReachChange={setFilterReach}
         searchTerm={searchTerm}
         onSearchChange={handleSearchChange}
