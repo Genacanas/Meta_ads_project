@@ -68,6 +68,7 @@ export function FilterBar({
                         onChange={(e) => onTagChange(e.target.value)}
                     >
                         <option value="All">All Tags</option>
+                        <option value="Untagged">Untagged</option>
                         {availableTags.map(tag => (
                             <option key={tag.Id} value={tag.Name}>{tag.Name}</option>
                         ))}
