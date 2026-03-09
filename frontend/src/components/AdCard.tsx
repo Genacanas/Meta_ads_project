@@ -1,4 +1,4 @@
-import { X, Check, RotateCcw, Tag as TagIcon, Brain, Loader2 } from 'lucide-react';
+import { X, Check, RotateCcw, Tag as TagIcon, Brain, Loader2, BarChart2, ChevronDown, ChevronUp } from 'lucide-react';
 import styles from './AdCard.module.css';
 import { TagSelector } from './TagSelector';
 import { useState } from 'react';
@@ -43,6 +43,13 @@ export function AdCard({
     const [isExplanationLoading, setIsExplanationLoading] = useState(false);
     const [explanationError, setExplanationError] = useState("");
 
+    // Ad Groups state
+    type AdGroup = { body: string; reach: number; links: string[] };
+    const [adGroups, setAdGroups] = useState<AdGroup[] | null>(null);
+    const [adGroupsStatus, setAdGroupsStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+    const [expandedGroup, setExpandedGroup] = useState<number | null>(null);
+    const [isGroupsPanelOpen, setIsGroupsPanelOpen] = useState(false);
+
     const formattedReach = new Intl.NumberFormat('en-US', {
         notation: "compact",
         compactDisplay: "short"
@@ -73,6 +80,34 @@ export function AdCard({
         } finally {
             setIsExplanationLoading(false);
         }
+    };
+
+    const handleAnalyzeClick = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsGroupsPanelOpen(true);
+        if (adGroupsStatus === 'done') return; // Ya tenemos los datos
+
+        setAdGroupsStatus('loading');
+        try {
+            await api.post(`/pages/${pageId}/analyze-groups`, {});
+        } catch {
+            // El POST puede fallar si ya hay un análisis corriendo, ignoramos
+        }
+
+        // Polling hasta recibir datos
+        const pollInterval = setInterval(async () => {
+            try {
+                const result = await api.get(`/pages/${pageId}/ad-groups`);
+                if (result.status === 'done' && result.groups) {
+                    setAdGroups(result.groups);
+                    setAdGroupsStatus('done');
+                    clearInterval(pollInterval);
+                }
+            } catch {
+                setAdGroupsStatus('error');
+                clearInterval(pollInterval);
+            }
+        }, 5000);
     };
 
     return (
@@ -201,6 +236,90 @@ export function AdCard({
                     <div className={styles.placeholder}>No Media</div>
                 )}
             </div>
+
+            {/* Analyze Ads Button */}
+            <div style={{ padding: '8px 12px 4px', borderTop: '1px solid #f1f5f9' }} onClick={e => e.stopPropagation()}>
+                <button
+                    onClick={handleAnalyzeClick}
+                    style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        fontSize: '12px', fontWeight: '600', padding: '5px 12px',
+                        borderRadius: '8px', border: '1px solid #e2e8f0',
+                        background: adGroupsStatus === 'done' ? '#f0fdf4' : '#f8fafc',
+                        color: adGroupsStatus === 'done' ? '#15803d' : '#475569',
+                        cursor: 'pointer', width: '100%', justifyContent: 'center'
+                    }}
+                >
+                    {adGroupsStatus === 'loading'
+                        ? <><Loader2 size={14} style={{ animation: 'spin 1.5s linear infinite' }} /> Analyzing...<style>{`@keyframes spin{100%{transform:rotate(360deg)}}`}</style></>
+                        : <><BarChart2 size={14} /> Analyze Ad Groups</>}
+                </button>
+            </div>
+
+            {/* Groups Panel */}
+            {isGroupsPanelOpen && (
+                <div style={{ borderTop: '1px solid #e2e8f0' }} onClick={e => e.stopPropagation()}>
+                    {adGroupsStatus === 'loading' && (
+                        <div style={{ padding: '16px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                            Fetching ads from Meta... this may take a minute.
+                        </div>
+                    )}
+                    {adGroupsStatus === 'error' && (
+                        <div style={{ padding: '12px', color: '#ef4444', fontSize: '13px', textAlign: 'center' }}>Error fetching groups.</div>
+                    )}
+                    {adGroupsStatus === 'done' && adGroups && (
+                        <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                                <thead>
+                                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                        <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: '600', color: '#475569' }}>Reach</th>
+                                        <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: '600', color: '#475569' }}>Links</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {adGroups.map((group, i) => (
+                                        <>
+                                            <tr
+                                                key={i}
+                                                onClick={() => setExpandedGroup(expandedGroup === i ? null : i)}
+                                                style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer', background: expandedGroup === i ? '#f0f9ff' : 'white' }}
+                                            >
+                                                <td style={{ padding: '8px 12px', fontWeight: '600', color: '#0f172a' }}>
+                                                    {new Intl.NumberFormat('en-US').format(group.reach)}
+                                                </td>
+                                                <td style={{ padding: '8px 12px', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    {group.links.length} links
+                                                    {expandedGroup === i ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                                </td>
+                                            </tr>
+                                            {expandedGroup === i && (
+                                                <tr key={`links-${i}`}>
+                                                    <td colSpan={2} style={{ padding: '0 12px 8px 24px', background: '#f8fafc' }}>
+                                                        <ul style={{ margin: 0, padding: '8px 0', listStyle: 'none' }}>
+                                                            {group.links.map((link, j) => (
+                                                                <li key={j} style={{ marginBottom: '4px' }}>
+                                                                    <a
+                                                                        href={link}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        style={{ color: '#6366f1', fontSize: '11px', wordBreak: 'break-all' }}
+                                                                    >
+                                                                        Ad #{j + 1}
+                                                                    </a>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <TagSelector
                 isOpen={isTagModalOpen}
