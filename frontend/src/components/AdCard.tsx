@@ -58,7 +58,7 @@ export function AdCard({
         };
     }, []);
 
-    // Al montar, chequea si ya hay grupos analizados en la BD
+    // Al montar, chequea si ya hay grupos analizados en la BD (o si está en proceso)
     useEffect(() => {
         let cancelled = false;
         api.get(`/pages/${pageId}/ad-groups`).then((result) => {
@@ -66,11 +66,30 @@ export function AdCard({
             if (result.status === 'done' && result.groups) {
                 setAdGroups(result.groups);
                 setAdGroupsStatus('done');
-                // No abrimos el panel automáticamente
+            } else if (result.status === 'processing') {
+                // Hay un análisis en curso en el servidor - arrancar polling
+                setAdGroupsStatus('loading');
+                setIsGroupsPanelOpen(true);
+                pollIntervalRef.current = setInterval(async () => {
+                    try {
+                        const r = await api.get(`/pages/${pageId}/ad-groups`);
+                        if (r.status === 'done' && r.groups) {
+                            setAdGroups(r.groups);
+                            setAdGroupsStatus('done');
+                            clearInterval(pollIntervalRef.current!);
+                            pollIntervalRef.current = null;
+                        }
+                    } catch {
+                        setAdGroupsStatus('error');
+                        clearInterval(pollIntervalRef.current!);
+                        pollIntervalRef.current = null;
+                    }
+                }, 5000);
             }
         }).catch(() => { /* sin grupos previos, no hacer nada */ });
         return () => { cancelled = true; };
     }, [pageId]);
+
 
 
     const formattedReach = new Intl.NumberFormat('en-US', {
