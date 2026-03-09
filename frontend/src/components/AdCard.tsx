@@ -1,7 +1,7 @@
 import { X, Check, RotateCcw, Tag as TagIcon, Brain, Loader2, BarChart2, ChevronDown, ChevronUp } from 'lucide-react';
 import styles from './AdCard.module.css';
 import { TagSelector } from './TagSelector';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { api } from '../lib/api';
 
 interface AdCardProps {
@@ -49,6 +49,29 @@ export function AdCard({
     const [adGroupsStatus, setAdGroupsStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
     const [expandedGroup, setExpandedGroup] = useState<number | null>(null);
     const [isGroupsPanelOpen, setIsGroupsPanelOpen] = useState(false);
+    const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // Limpia el interval al desmontar el componente
+    useEffect(() => {
+        return () => {
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        };
+    }, []);
+
+    // Al montar, chequea si ya hay grupos analizados en la BD
+    useEffect(() => {
+        let cancelled = false;
+        api.get(`/pages/${pageId}/ad-groups`).then((result) => {
+            if (cancelled) return;
+            if (result.status === 'done' && result.groups) {
+                setAdGroups(result.groups);
+                setAdGroupsStatus('done');
+                // No abrimos el panel automáticamente
+            }
+        }).catch(() => { /* sin grupos previos, no hacer nada */ });
+        return () => { cancelled = true; };
+    }, [pageId]);
+
 
     const formattedReach = new Intl.NumberFormat('en-US', {
         notation: "compact",
@@ -85,7 +108,7 @@ export function AdCard({
     const handleAnalyzeClick = async (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsGroupsPanelOpen(true);
-        if (adGroupsStatus === 'done') return; // Ya tenemos los datos
+        if (adGroupsStatus === 'loading' || adGroupsStatus === 'done') return; // Ya en proceso o ya finalizado
 
         setAdGroupsStatus('loading');
         try {
@@ -94,18 +117,23 @@ export function AdCard({
             // El POST puede fallar si ya hay un análisis corriendo, ignoramos
         }
 
+        // Limpiar cualquier interval anterior antes de arrancar uno nuevo
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+
         // Polling hasta recibir datos
-        const pollInterval = setInterval(async () => {
+        pollIntervalRef.current = setInterval(async () => {
             try {
                 const result = await api.get(`/pages/${pageId}/ad-groups`);
                 if (result.status === 'done' && result.groups) {
                     setAdGroups(result.groups);
                     setAdGroupsStatus('done');
-                    clearInterval(pollInterval);
+                    clearInterval(pollIntervalRef.current!);
+                    pollIntervalRef.current = null;
                 }
             } catch {
                 setAdGroupsStatus('error');
-                clearInterval(pollInterval);
+                clearInterval(pollIntervalRef.current!);
+                pollIntervalRef.current = null;
             }
         }, 5000);
     };
@@ -237,23 +265,43 @@ export function AdCard({
                 )}
             </div>
 
-            {/* Analyze Ads Button */}
+            {/* Analyze / View Ads Button */}
             <div style={{ padding: '8px 12px 4px', borderTop: '1px solid #f1f5f9' }} onClick={e => e.stopPropagation()}>
-                <button
-                    onClick={handleAnalyzeClick}
-                    style={{
-                        display: 'inline-flex', alignItems: 'center', gap: '6px',
-                        fontSize: '12px', fontWeight: '600', padding: '5px 12px',
-                        borderRadius: '8px', border: '1px solid #e2e8f0',
-                        background: adGroupsStatus === 'done' ? '#f0fdf4' : '#f8fafc',
-                        color: adGroupsStatus === 'done' ? '#15803d' : '#475569',
-                        cursor: 'pointer', width: '100%', justifyContent: 'center'
-                    }}
-                >
-                    {adGroupsStatus === 'loading'
-                        ? <><Loader2 size={14} style={{ animation: 'spin 1.5s linear infinite' }} /> Analyzing...<style>{`@keyframes spin{100%{transform:rotate(360deg)}}`}</style></>
-                        : <><BarChart2 size={14} /> Analyze Ad Groups</>}
-                </button>
+                {adGroupsStatus === 'done' ? (
+                    // Ya analizado: botón para mostrar/ocultar la tabla
+                    <button
+                        onClick={e => { e.stopPropagation(); setIsGroupsPanelOpen(v => !v); }}
+                        style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '6px',
+                            fontSize: '12px', fontWeight: '600', padding: '5px 12px',
+                            borderRadius: '8px', border: '1px solid #bbf7d0',
+                            background: '#f0fdf4', color: '#15803d',
+                            cursor: 'pointer', width: '100%', justifyContent: 'center'
+                        }}
+                    >
+                        <BarChart2 size={14} />
+                        {isGroupsPanelOpen ? 'Hide Ad Groups' : 'View Ad Groups'}
+                    </button>
+                ) : (
+                    // No analizado aún: botón para iniciar el análisis
+                    <button
+                        onClick={handleAnalyzeClick}
+                        disabled={adGroupsStatus === 'loading'}
+                        style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '6px',
+                            fontSize: '12px', fontWeight: '600', padding: '5px 12px',
+                            borderRadius: '8px', border: '1px solid #e2e8f0',
+                            background: '#f8fafc', color: '#475569',
+                            cursor: adGroupsStatus === 'loading' ? 'not-allowed' : 'pointer',
+                            opacity: adGroupsStatus === 'loading' ? 0.6 : 1,
+                            width: '100%', justifyContent: 'center'
+                        }}
+                    >
+                        {adGroupsStatus === 'loading'
+                            ? <><Loader2 size={14} style={{ animation: 'spin 1.5s linear infinite' }} /> Analyzing...<style>{`@keyframes spin{100%{transform:rotate(360deg)}}`}</style></>
+                            : <><BarChart2 size={14} /> Analyze Ad Groups</>}
+                    </button>
+                )}
             </div>
 
             {/* Groups Panel */}
