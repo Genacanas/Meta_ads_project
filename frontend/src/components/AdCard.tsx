@@ -1,7 +1,8 @@
-import { X, Check, RotateCcw, Tag as TagIcon, Brain, Loader2, BarChart2, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Check, RotateCcw, Tag as TagIcon, Brain, Loader2, BarChart2, ChevronDown, ChevronUp, Activity } from 'lucide-react';
 import styles from './AdCard.module.css';
 import { TagSelector } from './TagSelector';
 import { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { api } from '../lib/api';
 
 interface AdCardProps {
@@ -20,6 +21,26 @@ interface AdCardProps {
     onTagUpdate?: (pageId: string, newTagId: number | null, newTagName: string | null) => void;
     currentTab?: 'unprocessed' | 'saved' | 'deleted';
 }
+
+type AdLink = {
+    url: string;
+    is_active: boolean;
+    reach: number;
+    start_time?: string;
+    stop_time?: string;
+};
+
+type AdGroup = {
+    body: string;
+    reach: number;
+    is_active?: boolean;
+    links: AdLink[]
+};
+
+type ActivityPoint = {
+    week: string;
+    active_count: number;
+};
 
 export function AdCard({
     pageId,
@@ -44,8 +65,8 @@ export function AdCard({
     const [explanationError, setExplanationError] = useState("");
 
     // Ad Groups state
-    type AdGroup = { body: string; reach: number; links: string[] };
     const [adGroups, setAdGroups] = useState<AdGroup[] | null>(null);
+    const [activityGraph, setActivityGraph] = useState<ActivityPoint[] | null>(null);
     const [adGroupsStatus, setAdGroupsStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
     const [expandedGroup, setExpandedGroup] = useState<number | null>(null);
     const [isGroupsPanelOpen, setIsGroupsPanelOpen] = useState(false);
@@ -64,7 +85,13 @@ export function AdCard({
         api.get(`/pages/${pageId}/ad-groups`).then((result) => {
             if (cancelled) return;
             if (result.status === 'done' && result.groups) {
-                setAdGroups(result.groups);
+                // Compatibility for old format vs new format
+                if (Array.isArray(result.groups)) {
+                    setAdGroups(result.groups);
+                } else if (result.groups && typeof result.groups === 'object') {
+                    setAdGroups(result.groups.groups || []);
+                    setActivityGraph(result.groups.activity_graph || null);
+                }
                 setAdGroupsStatus('done');
             } else if (result.status === 'processing') {
                 // Hay un análisis en curso en el servidor - arrancar polling
@@ -74,7 +101,12 @@ export function AdCard({
                     try {
                         const r = await api.get(`/pages/${pageId}/ad-groups`);
                         if (r.status === 'done' && r.groups) {
-                            setAdGroups(r.groups);
+                            if (Array.isArray(r.groups)) {
+                                setAdGroups(r.groups);
+                            } else if (r.groups && typeof r.groups === 'object') {
+                                setAdGroups(r.groups.groups || []);
+                                setActivityGraph(r.groups.activity_graph || null);
+                            }
                             setAdGroupsStatus('done');
                             clearInterval(pollIntervalRef.current!);
                             pollIntervalRef.current = null;
@@ -144,7 +176,12 @@ export function AdCard({
             try {
                 const result = await api.get(`/pages/${pageId}/ad-groups`);
                 if (result.status === 'done' && result.groups) {
-                    setAdGroups(result.groups);
+                    if (Array.isArray(result.groups)) {
+                        setAdGroups(result.groups);
+                    } else if (result.groups && typeof result.groups === 'object') {
+                        setAdGroups(result.groups.groups || []);
+                        setActivityGraph(result.groups.activity_graph || null);
+                    }
                     setAdGroupsStatus('done');
                     clearInterval(pollIntervalRef.current!);
                     pollIntervalRef.current = null;
@@ -155,6 +192,64 @@ export function AdCard({
                 pollIntervalRef.current = null;
             }
         }, 5000);
+    };
+
+    // Render simple bar graph
+    const renderActivityGraph = () => {
+        if (!activityGraph || activityGraph.length === 0) return null;
+
+        const maxCount = Math.max(...activityGraph.map(g => g.active_count), 1);
+
+        return (
+            <div style={{ padding: '12px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', width: '100%', boxSizing: 'border-box' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#475569', fontSize: '12px', fontWeight: '600' }}>
+                    <Activity size={14} />
+                    Active Ads Over Time
+                </div>
+                {/* Contenedor del scroll horizontal */}
+                <div className="custom-scrollbar" style={{
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    gap: '4px',
+                    height: '70px', /* Aumentado un poco para el scrollbar */
+                    marginTop: '10px',
+                    overflowX: 'auto',
+                    paddingBottom: '8px'
+                }}>
+                    {activityGraph.map((point, idx) => {
+                        const heightPercent = (point.active_count / maxCount) * 100;
+                        return (
+                            <div
+                                key={idx}
+                                title={`${point.week}: ${point.active_count} ads`}
+                                style={{
+                                    flex: '0 0 auto', /* Evita que las barras se encojan */
+                                    background: '#cbd5e1',
+                                    minWidth: '12px',
+                                    height: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'flex-end',
+                                    borderRadius: '2px 2px 0 0',
+                                }}
+                            >
+                                <div style={{
+                                    height: `${heightPercent}%`,
+                                    background: '#3b82f6',
+                                    width: '100%',
+                                    borderRadius: '2px 2px 0 0',
+                                    transition: 'height 0.3s ease'
+                                }}></div>
+                            </div>
+                        );
+                    })}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '10px', color: '#94a3b8' }}>
+                    <span>{activityGraph[0].week.replace('-W', ' W')}</span>
+                    <span>{activityGraph[activityGraph.length - 1].week.replace('-W', ' W')}</span>
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -335,54 +430,87 @@ export function AdCard({
                         <div style={{ padding: '12px', color: '#ef4444', fontSize: '13px', textAlign: 'center' }}>Error fetching groups.</div>
                     )}
                     {adGroupsStatus === 'done' && adGroups && (
-                        <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                                <thead>
-                                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                                        <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: '600', color: '#475569' }}>Reach</th>
-                                        <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: '600', color: '#475569' }}>Links</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {adGroups.map((group, i) => (
-                                        <>
-                                            <tr
-                                                key={i}
-                                                onClick={() => setExpandedGroup(expandedGroup === i ? null : i)}
-                                                style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer', background: expandedGroup === i ? '#f0f9ff' : 'white' }}
-                                            >
-                                                <td style={{ padding: '8px 12px', fontWeight: '600', color: '#0f172a' }}>
-                                                    {new Intl.NumberFormat('en-US').format(group.reach)}
-                                                </td>
-                                                <td style={{ padding: '8px 12px', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                    {group.links.length} links
-                                                    {expandedGroup === i ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                                                </td>
-                                            </tr>
-                                            {expandedGroup === i && (
-                                                <tr key={`links-${i}`}>
-                                                    <td colSpan={2} style={{ padding: '0 12px 8px 24px', background: '#f8fafc' }}>
-                                                        <ul style={{ margin: 0, padding: '8px 0', listStyle: 'none' }}>
-                                                            {group.links.map((link, j) => (
-                                                                <li key={j} style={{ marginBottom: '4px' }}>
-                                                                    <a
-                                                                        href={link}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        style={{ color: '#6366f1', fontSize: '11px', wordBreak: 'break-all' }}
-                                                                    >
-                                                                        Ad #{j + 1}
-                                                                    </a>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <div>
+                            {renderActivityGraph()}
+                            <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                                    <thead>
+                                        <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                            <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: '600', color: '#475569' }}>Reach</th>
+                                            <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: '600', color: '#475569' }}>Links</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {adGroups.map((group, i) => {
+                                            const isActive = group.is_active;
+                                            return (
+                                                <React.Fragment key={i}>
+                                                    <tr
+                                                        onClick={() => setExpandedGroup(expandedGroup === i ? null : i)}
+                                                        style={{
+                                                            borderBottom: '1px solid #f1f5f9',
+                                                            cursor: 'pointer',
+                                                            background: expandedGroup === i ? '#f0f9ff' : (isActive ? '#f0fdf4' : 'white')
+                                                        }}
+                                                    >
+                                                        <td style={{ padding: '8px 12px', fontWeight: '600', color: isActive ? '#15803d' : '#0f172a' }}>
+                                                            {isActive && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', marginRight: '6px' }}></span>}
+                                                            {new Intl.NumberFormat('en-US').format(group.reach)}
+                                                        </td>
+                                                        <td style={{ padding: '8px 12px', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                            {group.links.length} ads
+                                                            {expandedGroup === i ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                                        </td>
+                                                    </tr>
+                                                    {expandedGroup === i && (
+                                                        <tr key={`links-${i}`}>
+                                                            <td colSpan={2} style={{ padding: '0 12px 8px 24px', background: '#f8fafc' }}>
+                                                                <ul style={{ margin: 0, padding: '8px 0', listStyle: 'none' }}>
+                                                                    {group.links.map((linkObj, j) => {
+                                                                        // Compatibilidad: si el link es viejo viene como string, si es nuevo como objeto
+                                                                        let linkUrl = '';
+                                                                        let isAdActive = false;
+                                                                        let adReach = 0;
+
+                                                                        if (typeof linkObj === 'string') {
+                                                                            linkUrl = linkObj;
+                                                                        } else {
+                                                                            linkUrl = linkObj.url;
+                                                                            isAdActive = linkObj.is_active;
+                                                                            adReach = linkObj.reach;
+                                                                        }
+
+                                                                        return (
+                                                                            <li key={j} style={{ marginBottom: '6px', fontSize: '11px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                                                                                {isAdActive ? (
+                                                                                    <span style={{ color: '#15803d', fontWeight: 'bold' }}>🟢 Live</span>
+                                                                                ) : (
+                                                                                    <span style={{ color: '#94a3b8' }}>⚪ Inactive</span>
+                                                                                )}
+                                                                                <span style={{ color: '#475569', fontWeight: 600 }}>
+                                                                                    | Reach: {new Intl.NumberFormat('en-US', { notation: "compact" }).format(adReach)}
+                                                                                </span>
+                                                                                | <a
+                                                                                    href={linkUrl}
+                                                                                    target="_blank"
+                                                                                    rel="noopener noreferrer"
+                                                                                    style={{ color: '#6366f1', wordBreak: 'break-all' }}
+                                                                                >
+                                                                                    Ad #{j + 1} URL
+                                                                                </a>
+                                                                            </li>
+                                                                        );
+                                                                    })}
+                                                                </ul>
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
                 </div>
