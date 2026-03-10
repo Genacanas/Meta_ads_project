@@ -67,6 +67,7 @@ export function AdCard({
     // Ad Groups state
     const [adGroups, setAdGroups] = useState<AdGroup[] | null>(null);
     const [activityGraph, setActivityGraph] = useState<ActivityPoint[] | null>(null);
+    const [totalScrapedReach, setTotalScrapedReach] = useState<number | null>(null);
     const [adGroupsStatus, setAdGroupsStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
     const [expandedGroup, setExpandedGroup] = useState<number | null>(null);
     const [isGroupsPanelOpen, setIsGroupsPanelOpen] = useState(false);
@@ -91,6 +92,7 @@ export function AdCard({
                 } else if (result.groups && typeof result.groups === 'object') {
                     setAdGroups(result.groups.groups || []);
                     setActivityGraph(result.groups.activity_graph || null);
+                    setTotalScrapedReach(result.groups.total_scraped_reach || null);
                 }
                 setAdGroupsStatus('done');
             } else if (result.status === 'processing') {
@@ -106,6 +108,7 @@ export function AdCard({
                             } else if (r.groups && typeof r.groups === 'object') {
                                 setAdGroups(r.groups.groups || []);
                                 setActivityGraph(r.groups.activity_graph || null);
+                                setTotalScrapedReach(r.groups.total_scraped_reach || null);
                             }
                             setAdGroupsStatus('done');
                             clearInterval(pollIntervalRef.current!);
@@ -181,6 +184,7 @@ export function AdCard({
                     } else if (result.groups && typeof result.groups === 'object') {
                         setAdGroups(result.groups.groups || []);
                         setActivityGraph(result.groups.activity_graph || null);
+                        setTotalScrapedReach(result.groups.total_scraped_reach || null);
                     }
                     setAdGroupsStatus('done');
                     clearInterval(pollIntervalRef.current!);
@@ -305,6 +309,20 @@ export function AdCard({
                                         {activeAdsCount} ads
                                     </span>
                                 )}
+                            </div>
+                        )}
+                        {/* New Scraped Reach Badge */}
+                        {totalScrapedReach != null && (
+                            <div style={{ marginTop: '6px' }}>
+                                <span style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                    background: '#fef08a', color: '#854d0e',
+                                    fontSize: '11px', fontWeight: '600',
+                                    borderRadius: '8px', padding: '2px 8px',
+                                    border: '1px solid #fde047'
+                                }} title="Total reach downloaded by full scrape">
+                                    Scraped Reach: {new Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(totalScrapedReach)}
+                                </span>
                             </div>
                         )}
                         {beneficiary && <p className={styles.beneficiary}>{beneficiary}</p>}
