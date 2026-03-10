@@ -204,7 +204,7 @@ export function AdCard({
             <div style={{ padding: '12px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', width: '100%', boxSizing: 'border-box' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#475569', fontSize: '12px', fontWeight: '600' }}>
                     <Activity size={14} />
-                    Active Ads Over Time
+                    Ads Created Over Time
                 </div>
                 {/* Contenedor del scroll horizontal */}
                 <div className="custom-scrollbar" style={{
