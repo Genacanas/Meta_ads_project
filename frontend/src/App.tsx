@@ -7,6 +7,9 @@ import { useTags } from './hooks/useTags';
 import { LayoutGrid } from 'lucide-react';
 import { AddSearchTerm } from './components/AddSearchTerm';
 import { api } from './lib/api';
+import { useAuth } from './context/AuthContext';
+import { Login } from './components/Login';
+import { LogOut } from 'lucide-react';
 
 import './App.css';
 
@@ -18,6 +21,8 @@ function App() {
   const [filterReach, setFilterReach] = useState(false);
   const [activeTab, setActiveTab] = useState<'unprocessed' | 'saved' | 'deleted'>('unprocessed');
   const [page, setPage] = useState(0);
+
+  const { isAuthenticated, logout } = useAuth();
 
   const { countries } = useCountries();
   const { tags } = useTags();
@@ -108,11 +113,35 @@ function App() {
     setPage(prev => prev + 1);
   };
 
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
   return (
     <div className="app-container">
       <header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>Ad Library Analysis</h1>
-        <AddSearchTerm onTermAdded={() => window.location.reload()} />
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <AddSearchTerm onTermAdded={() => window.location.reload()} />
+          <button
+            onClick={logout}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '8px 16px',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: 500,
+            }}
+          >
+            <LogOut size={16} />
+            Logout
+          </button>
+        </div>
       </header>
 
       {/* Tabs UI */}
