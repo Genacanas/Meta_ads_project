@@ -21,6 +21,7 @@ function App() {
   const [filterReach, setFilterReach] = useState(false);
   const [activeTab, setActiveTab] = useState<'unprocessed' | 'saved' | 'deleted'>('unprocessed');
   const [page, setPage] = useState(0);
+  const [actionDate, setActionDate] = useState('');
 
   const { isAuthenticated, logout } = useAuth();
 
@@ -33,8 +34,9 @@ function App() {
     tag: selectedTag,
     searchTerm,
     status: activeTab,
-    minReach: filterReach ? 900000 : 200000
-  }), [selectedCountry, selectedCategory, selectedTag, searchTerm, activeTab, filterReach]);
+    minReach: filterReach ? 900000 : 200000,
+    actionDate
+  }), [selectedCountry, selectedCategory, selectedTag, searchTerm, activeTab, filterReach, actionDate]);
 
   // Pass filters to hook
   const { pages, setPages, loading, error, hasMore } = usePages(
@@ -65,6 +67,11 @@ function App() {
 
   const handleTabChange = (tab: 'unprocessed' | 'saved' | 'deleted') => {
     setActiveTab(tab);
+    setPage(0);
+  };
+
+  const handleActionDateChange = (date: string) => {
+    setActionDate(date);
     setPage(0);
   };
 
@@ -202,6 +209,9 @@ function App() {
         searchTerm={searchTerm}
         onSearchChange={handleSearchChange}
         availableCountries={countries}
+        actionDate={actionDate}
+        onActionDateChange={handleActionDateChange}
+        filterReach={filterReach}
       />
 
       <main className="main-content">

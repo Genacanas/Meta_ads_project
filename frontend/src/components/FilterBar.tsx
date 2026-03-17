@@ -16,6 +16,8 @@ interface FilterBarProps {
     onSearchChange: (term: string) => void;
     filterReach?: boolean;
     availableCountries: string[];
+    actionDate?: string;
+    onActionDateChange: (date: string) => void;
 }
 
 export function FilterBar({
@@ -30,7 +32,9 @@ export function FilterBar({
     searchTerm,
     onSearchChange,
     filterReach,
-    availableCountries
+    availableCountries,
+    actionDate,
+    onActionDateChange
 }: FilterBarProps) {
     return (
         <div className={styles.container}>
@@ -83,6 +87,17 @@ export function FilterBar({
                     />
                     <span>900k+ Reach</span>
                 </label>
+
+                <div className={styles.selectWrapper}>
+                    <input
+                        type="date"
+                        className={styles.select}
+                        value={actionDate || ''}
+                        onChange={(e) => onActionDateChange(e.target.value)}
+                        placeholder="Action Date"
+                        title="Filter by action date"
+                    />
+                </div>
             </div>
 
             <div className={styles.rightGroup}>
