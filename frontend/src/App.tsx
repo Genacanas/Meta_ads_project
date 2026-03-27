@@ -238,6 +238,7 @@ function App() {
                   snapshotUrl={page.top_creative?.snapshot_url}
                   tagId={page.tagId}
                   tagName={page.tag}
+                  isQueuedForScrape={page.is_queued_for_scrape}
                   onStatusChange={handleStatusChange}
                   onTagUpdate={handleTagUpdate}
                   currentTab={activeTab}

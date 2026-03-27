@@ -1,4 +1,4 @@
-import { X, Check, RotateCcw, Tag as TagIcon, Brain, Loader2, BarChart2, ChevronDown, ChevronUp, Activity } from 'lucide-react';
+import { X, Check, RotateCcw, Tag as TagIcon, Brain, Loader2, BarChart2, ChevronDown, ChevronUp, Activity, Play } from 'lucide-react';
 import styles from './AdCard.module.css';
 import { TagSelector } from './TagSelector';
 import { useState, useRef, useEffect } from 'react';
@@ -20,6 +20,7 @@ interface AdCardProps {
     onStatusChange?: (pageId: string, status: 'saved' | 'deleted' | 'unprocessed') => void;
     onTagUpdate?: (pageId: string, newTagId: number | null, newTagName: string | null) => void;
     currentTab?: 'unprocessed' | 'saved' | 'deleted';
+    isQueuedForScrape?: boolean;
 }
 
 type AdLink = {
@@ -56,7 +57,8 @@ export function AdCard({
     tagName,
     onStatusChange,
     onTagUpdate,
-    currentTab = 'unprocessed'
+    currentTab = 'unprocessed',
+    isQueuedForScrape = false
 }: AdCardProps) {
     const [isTagModalOpen, setIsTagModalOpen] = useState(false);
     const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
@@ -72,6 +74,8 @@ export function AdCard({
     const [expandedGroup, setExpandedGroup] = useState<number | null>(null);
     const [isGroupsPanelOpen, setIsGroupsPanelOpen] = useState(false);
     const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const [isScrapingRequested, setScrapingRequested] = useState(isQueuedForScrape);
+    const [isScrapeActionLoading, setIsScrapeActionLoading] = useState(false);
 
     // Limpia el interval al desmontar el componente
     useEffect(() => {
@@ -196,6 +200,36 @@ export function AdCard({
                 pollIntervalRef.current = null;
             }
         }, 5000);
+    };
+
+    const handleFullScrapeClick = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (isScrapingRequested || isScrapeActionLoading) return;
+        
+        setIsScrapeActionLoading(true);
+        try {
+            await api.post(`/pages/${pageId}/trigger-full-scrape`, {});
+            setScrapingRequested(true);
+        } catch (err: any) {
+            alert("Failed to trigger full scrape: " + (err.message || "Unknown error"));
+        } finally {
+            setIsScrapeActionLoading(false);
+        }
+    };
+
+    const handleCancelScrapeClick = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (isScrapeActionLoading) return;
+
+        setIsScrapeActionLoading(true);
+        try {
+            await api.post(`/pages/${pageId}/cancel-full-scrape`, {});
+            setScrapingRequested(false);
+        } catch (err: any) {
+            alert("Failed to cancel scrape: " + (err.message || "Unknown error"));
+        } finally {
+            setIsScrapeActionLoading(false);
+        }
     };
 
     // Render simple bar graph
@@ -397,8 +431,9 @@ export function AdCard({
                 )}
             </div>
 
-            {/* Analyze / View Ads Button */}
-            <div style={{ padding: '8px 12px 4px', borderTop: '1px solid #f1f5f9' }} onClick={e => e.stopPropagation()}>
+            {/* Buttons Row */}
+            <div style={{ padding: '8px 12px 4px', borderTop: '1px solid #f1f5f9', display: 'flex', gap: '8px' }} onClick={e => e.stopPropagation()}>
+                {/* Analyze / View Ads Button */}
                 {adGroupsStatus === 'done' ? (
                     // Ya analizado: botón para mostrar/ocultar la tabla
                     <button
@@ -408,7 +443,7 @@ export function AdCard({
                             fontSize: '12px', fontWeight: '600', padding: '5px 12px',
                             borderRadius: '8px', border: '1px solid #bbf7d0',
                             background: '#f0fdf4', color: '#15803d',
-                            cursor: 'pointer', width: '100%', justifyContent: 'center'
+                            cursor: 'pointer', flex: 1, justifyContent: 'center'
                         }}
                     >
                         <BarChart2 size={14} />
@@ -422,17 +457,75 @@ export function AdCard({
                         style={{
                             display: 'inline-flex', alignItems: 'center', gap: '6px',
                             fontSize: '12px', fontWeight: '600', padding: '5px 12px',
-                            borderRadius: '8px', border: '1px solid #e2e8f0',
-                            background: '#f8fafc', color: '#475569',
+                            borderRadius: '8px', border: '1px solid #93c5fd',
+                            background: '#eff6ff', color: '#1d4ed8',
                             cursor: adGroupsStatus === 'loading' ? 'not-allowed' : 'pointer',
                             opacity: adGroupsStatus === 'loading' ? 0.6 : 1,
-                            width: '100%', justifyContent: 'center'
+                            flex: 1, justifyContent: 'center'
                         }}
                     >
                         {adGroupsStatus === 'loading'
                             ? <><Loader2 size={14} style={{ animation: 'spin 1.5s linear infinite' }} /> Analyzing...<style>{`@keyframes spin{100%{transform:rotate(360deg)}}`}</style></>
                             : <><BarChart2 size={14} /> Analyze Ad Groups</>}
                     </button>
+                )}
+
+                {/* Full Scrape Action Button */}
+                {!isScrapingRequested ? (
+                    <button
+                        onClick={handleFullScrapeClick}
+                        disabled={isScrapeActionLoading}
+                        style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '6px',
+                            fontSize: '12px', fontWeight: '600', padding: '5px 12px',
+                            borderRadius: '8px', border: '1px solid #fcd34d',
+                            background: '#fef3c7', color: '#b45309',
+                            cursor: isScrapeActionLoading ? 'not-allowed' : 'pointer', 
+                            flex: 1, justifyContent: 'center',
+                            opacity: isScrapeActionLoading ? 0.7 : 1
+                        }}
+                        title="Send to C# Master (Mode 10) for Product extraction and Video download"
+                    >
+                        {isScrapeActionLoading ? (
+                            <Loader2 size={14} style={{ animation: 'spin 1.5s linear infinite' }} />
+                        ) : (
+                            <Play size={14} />
+                        )}
+                        Run Full Scrape
+                    </button>
+                ) : (
+                    <div
+                        style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '6px',
+                            fontSize: '12px', fontWeight: '600', padding: '5px 6px 5px 12px',
+                            borderRadius: '8px', border: '1px solid #e2e8f0',
+                            background: '#f8fafc', color: '#94a3b8',
+                            flex: 1, justifyContent: 'space-between', cursor: 'default',
+                            opacity: isScrapeActionLoading ? 0.7 : 1
+                        }}
+                    >
+                        <span>Queued for Master</span>
+                        <button
+                            onClick={handleCancelScrapeClick}
+                            disabled={isScrapeActionLoading}
+                            title="Cancel and remove from queue"
+                            style={{
+                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                width: '20px', height: '20px', flexShrink: 0,
+                                borderRadius: '4px', border: '1px solid #fca5a5',
+                                background: '#fef2f2', color: '#dc2626',
+                                cursor: isScrapeActionLoading ? 'not-allowed' : 'pointer', 
+                                fontSize: '11px', fontWeight: '700',
+                                padding: 0, lineHeight: 1
+                            }}
+                        >
+                            {isScrapeActionLoading ? (
+                                <Loader2 size={10} style={{ animation: 'spin 1.5s linear infinite' }} />
+                            ) : (
+                                '✕'
+                            )}
+                        </button>
+                    </div>
                 )}
             </div>
 

@@ -17,6 +17,7 @@ export interface PageData {
         media_type: 'image' | 'video';
         snapshot_url?: string;
     };
+    is_queued_for_scrape?: boolean;
 }
 
 export function usePages(
