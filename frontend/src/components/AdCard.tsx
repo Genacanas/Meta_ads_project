@@ -76,6 +76,23 @@ export function AdCard({
     const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const [isScrapingRequested, setScrapingRequested] = useState(isQueuedForScrape);
     const [isScrapeActionLoading, setIsScrapeActionLoading] = useState(false);
+    const [isVisible, setIsVisible] = useState(false);
+    const cardRef = useRef<HTMLDivElement>(null);
+
+    // Observer para carga diferida (Intersection Observer)
+    useEffect(() => {
+        if (!cardRef.current) return;
+        
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting) {
+                setIsVisible(true);
+                observer.disconnect(); // Una vez visible, ya no lo necesitamos
+            }
+        }, { threshold: 0.1 });
+
+        observer.observe(cardRef.current);
+        return () => observer.disconnect();
+    }, []);
 
     // Limpia el interval al desmontar el componente
     useEffect(() => {
@@ -84,8 +101,10 @@ export function AdCard({
         };
     }, []);
 
-    // Al montar, chequea si ya hay grupos analizados en la BD (o si está en proceso)
+    // Al montar (y cuando sea visible), chequea si ya hay grupos analizados en la BD
     useEffect(() => {
+        if (!isVisible) return;
+
         let cancelled = false;
         api.get(`/pages/${pageId}/ad-groups`).then((result) => {
             if (cancelled) return;
@@ -127,7 +146,7 @@ export function AdCard({
             }
         }).catch(() => { /* sin grupos previos, no hacer nada */ });
         return () => { cancelled = true; };
-    }, [pageId]);
+    }, [pageId, isVisible]);
 
 
 
@@ -291,7 +310,7 @@ export function AdCard({
     };
 
     return (
-        <div className={styles.card} onClick={handleCardClick} style={{ cursor: snapshotUrl ? 'pointer' : 'default' }}>
+        <div ref={cardRef} className={styles.card} onClick={handleCardClick} style={{ cursor: snapshotUrl ? 'pointer' : 'default' }}>
             {/* Header info */}
             <div className={styles.header}>
                 <div className={styles.titleRow} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

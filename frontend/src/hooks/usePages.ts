@@ -23,7 +23,7 @@ export interface PageData {
 export function usePages(
     filters: { country?: string; category?: string; searchTerm?: string; status?: 'unprocessed' | 'saved' | 'deleted'; minReach?: number; tag?: string; actionDate?: string },
     page: number = 0,
-    limit: number = 100
+    limit: number = 40
 ) {
     const [pages, setPages] = useState<PageData[]>([]);
     const [loading, setLoading] = useState(true);
