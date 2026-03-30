@@ -4,7 +4,7 @@ import { AdCard } from './AdCard';
 import { usePages } from '../hooks/usePages';
 import { useCountries } from '../hooks/useCountries';
 import { useTags } from '../hooks/useTags';
-import { LayoutGrid, LogOut } from 'lucide-react';
+import { LayoutGrid, LogOut, Trash2 } from 'lucide-react';
 import { AddSearchTerm } from './AddSearchTerm';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
@@ -97,6 +97,18 @@ export function Dashboard() {
     setPage(prev => prev + 1);
   };
 
+  const handleClearAllAnalysis = async () => {
+    if (!window.confirm("CRITICAL: This will delete ALL ad group analysis for ALL pages. This cannot be undone. Are you sure?")) return;
+
+    try {
+      await api.delete('/api/pages/ad-groups/bulk');
+      alert("All analyses cleared successfully. Reloading data...");
+      window.location.reload();
+    } catch (err: any) {
+      alert("Failed to clear all analyses: " + (err.message || "Unknown error"));
+    }
+  };
+
   if (error) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[#0f0f10] text-red-500">
@@ -111,6 +123,26 @@ export function Dashboard() {
         <h1>Ad Library Analysis</h1>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <AddSearchTerm onTermAdded={() => window.location.reload()} />
+          <button
+            onClick={handleClearAllAnalysis}
+            title="Clear all analyzed groups (Caution!)"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '8px 12px',
+              backgroundColor: '#f1f5f9',
+              color: '#64748b',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 500,
+            }}
+          >
+            <Trash2 size={14} />
+            Clear All Analysis
+          </button>
           <button
             onClick={logout}
             style={{

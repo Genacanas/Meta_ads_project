@@ -1,4 +1,4 @@
-import { X, Check, RotateCcw, Tag as TagIcon, Brain, Loader2, BarChart2, ChevronDown, ChevronUp, Activity, Play } from 'lucide-react';
+import { X, Check, RotateCcw, Tag as TagIcon, Brain, Loader2, BarChart2, ChevronDown, ChevronUp, Activity, Play, Trash2 } from 'lucide-react';
 import styles from './AdCard.module.css';
 import { TagSelector } from './TagSelector';
 import { useState, useRef, useEffect } from 'react';
@@ -256,6 +256,23 @@ export function AdCard({
         }
     };
 
+    const handleClearAnalysis = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm("Are you sure you want to delete the analysis for this page?")) return;
+
+        try {
+            await api.delete(`/api/pages/${pageId}/ad-groups`);
+            setAdGroups(null);
+            setActivityGraph(null);
+            setTotalScrapedReach(null);
+            setCountryStats(null);
+            setAdGroupsStatus('idle');
+            setIsGroupsPanelOpen(false);
+        } catch (err: any) {
+            alert("Failed to clear analysis: " + (err.message || "Unknown error"));
+        }
+    };
+
     // Render simple bar graph
     const renderActivityGraph = () => {
         if (!activityGraph || activityGraph.length === 0) return null;
@@ -317,16 +334,24 @@ export function AdCard({
     const renderCountryStats = () => {
         if (!countryStats || Object.keys(countryStats).length === 0) return null;
 
-        const entries = Object.entries(countryStats).slice(0, 10); // Show top 10
 
         return (
             <div style={{ padding: '12px', borderBottom: '1px solid #e2e8f0', background: '#fff' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#1e40af', fontSize: '12px', fontWeight: '700' }}>
-                    <BarChart2 size={14} color="#3b82f6" />
-                    Targeted Countries (Ads Count)
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1e40af', fontSize: '12px', fontWeight: '700' }}>
+                        <BarChart2 size={14} color="#3b82f6" />
+                        Targeted Countries (Ads Count)
+                    </div>
+                    <button 
+                        onClick={handleClearAnalysis}
+                        title="Clear analysis data"
+                        style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}
+                    >
+                        <Trash2 size={14} />
+                    </button>
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {entries.map(([country, count]) => (
+                    {Object.entries(countryStats).map(([country, count]) => (
                         <span key={country} style={{
                             display: 'inline-flex', alignItems: 'center', gap: '4px',
                             background: '#ebf5ff', color: '#1e40af',
@@ -338,11 +363,6 @@ export function AdCard({
                             {country}: {count}
                         </span>
                     ))}
-                    {Object.keys(countryStats).length > 10 && (
-                        <span style={{ fontSize: '11px', color: '#94a3b8', alignSelf: 'center' }}>
-                            +{Object.keys(countryStats).length - 10} more
-                        </span>
-                    )}
                 </div>
             </div>
         );
