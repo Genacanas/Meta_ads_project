@@ -29,6 +29,7 @@ type AdLink = {
     reach: number;
     start_time?: string;
     stop_time?: string;
+    countries?: string[];
 };
 
 type AdGroup = {
@@ -70,6 +71,7 @@ export function AdCard({
     const [adGroups, setAdGroups] = useState<AdGroup[] | null>(null);
     const [activityGraph, setActivityGraph] = useState<ActivityPoint[] | null>(null);
     const [totalScrapedReach, setTotalScrapedReach] = useState<number | null>(null);
+    const [countryStats, setCountryStats] = useState<Record<string, number> | null>(null);
     const [adGroupsStatus, setAdGroupsStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
     const [expandedGroup, setExpandedGroup] = useState<number | null>(null);
     const [isGroupsPanelOpen, setIsGroupsPanelOpen] = useState(false);
@@ -116,6 +118,7 @@ export function AdCard({
                     setAdGroups(result.groups.groups || []);
                     setActivityGraph(result.groups.activity_graph || null);
                     setTotalScrapedReach(result.groups.total_scraped_reach || null);
+                    setCountryStats(result.groups.country_stats || null);
                 }
                 setAdGroupsStatus('done');
             } else if (result.status === 'processing') {
@@ -132,6 +135,7 @@ export function AdCard({
                                 setAdGroups(r.groups.groups || []);
                                 setActivityGraph(r.groups.activity_graph || null);
                                 setTotalScrapedReach(r.groups.total_scraped_reach || null);
+                                setCountryStats(r.groups.country_stats || null);
                             }
                             setAdGroupsStatus('done');
                             clearInterval(pollIntervalRef.current!);
@@ -208,6 +212,7 @@ export function AdCard({
                         setAdGroups(result.groups.groups || []);
                         setActivityGraph(result.groups.activity_graph || null);
                         setTotalScrapedReach(result.groups.total_scraped_reach || null);
+                        setCountryStats(result.groups.country_stats || null);
                     }
                     setAdGroupsStatus('done');
                     clearInterval(pollIntervalRef.current!);
@@ -304,6 +309,39 @@ export function AdCard({
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '10px', color: '#94a3b8' }}>
                     <span>{activityGraph[0].week.replace('-W', ' W')}</span>
                     <span>{activityGraph[activityGraph.length - 1].week.replace('-W', ' W')}</span>
+                </div>
+            </div>
+        );
+    };
+
+    const renderCountryStats = () => {
+        if (!countryStats || Object.keys(countryStats).length === 0) return null;
+
+        const entries = Object.entries(countryStats).slice(0, 10); // Show top 10
+
+        return (
+            <div style={{ padding: '12px', borderBottom: '1px solid #e2e8f0', background: '#fff' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#475569', fontSize: '12px', fontWeight: '600' }}>
+                    <BarChart2 size={14} />
+                    Targeted Countries (Ads Count)
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {entries.map(([country, count]) => (
+                        <span key={country} style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            background: '#f1f5f9', color: '#475569',
+                            fontSize: '11px', fontWeight: '600',
+                            borderRadius: '6px', padding: '2px 8px',
+                            border: '1px solid #e2e8f0'
+                        }} title={`${count} ads target ${country}`}>
+                            {country}: {count}
+                        </span>
+                    ))}
+                    {Object.keys(countryStats).length > 10 && (
+                        <span style={{ fontSize: '11px', color: '#94a3b8', alignSelf: 'center' }}>
+                            +{Object.keys(countryStats).length - 10} more
+                        </span>
+                    )}
                 </div>
             </div>
         );
@@ -562,6 +600,7 @@ export function AdCard({
                     {adGroupsStatus === 'done' && adGroups && (
                         <div>
                             {renderActivityGraph()}
+                            {renderCountryStats()}
                             <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
                                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                                     <thead>
