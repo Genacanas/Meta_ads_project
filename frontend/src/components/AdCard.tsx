@@ -321,18 +321,19 @@ export function AdCard({
 
         return (
             <div style={{ padding: '12px', borderBottom: '1px solid #e2e8f0', background: '#fff' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#475569', fontSize: '12px', fontWeight: '600' }}>
-                    <BarChart2 size={14} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#1e40af', fontSize: '12px', fontWeight: '700' }}>
+                    <BarChart2 size={14} color="#3b82f6" />
                     Targeted Countries (Ads Count)
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                     {entries.map(([country, count]) => (
                         <span key={country} style={{
                             display: 'inline-flex', alignItems: 'center', gap: '4px',
-                            background: '#f1f5f9', color: '#475569',
-                            fontSize: '11px', fontWeight: '600',
-                            borderRadius: '6px', padding: '2px 8px',
-                            border: '1px solid #e2e8f0'
+                            background: '#ebf5ff', color: '#1e40af',
+                            fontSize: '11px', fontWeight: '700',
+                            borderRadius: '12px', padding: '3px 10px',
+                            border: '1px solid #bfdbfe',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                         }} title={`${count} ads target ${country}`}>
                             {country}: {count}
                         </span>
