@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { X, Edit2, Tag as TagIcon, ArrowRight, Trash2, Check, Loader2 } from 'lucide-react';
-import { useTags, Tag } from '../hooks/useTags';
+import { useTags } from '../hooks/useTags';
 
 interface TagManagerModalProps {
     isOpen: boolean;
