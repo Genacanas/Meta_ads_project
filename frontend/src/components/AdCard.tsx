@@ -19,6 +19,7 @@ interface AdCardProps {
     tagName?: string;
     onStatusChange?: (pageId: string, status: 'saved' | 'deleted' | 'unprocessed') => void;
     onTagUpdate?: (pageId: string, newTagId: number | null, newTagName: string | null) => void;
+    notes?: string;
     currentTab?: 'unprocessed' | 'saved' | 'deleted';
     isQueuedForScrape?: boolean;
 }
@@ -58,6 +59,7 @@ export function AdCard({
     tagName,
     onStatusChange,
     onTagUpdate,
+    notes,
     currentTab = 'unprocessed',
     isQueuedForScrape = false
 }: AdCardProps) {
@@ -83,9 +85,7 @@ export function AdCard({
 
     // Notes State
     const [showNotes, setShowNotes] = useState(false);
-    const [noteContent, setNoteContent] = useState("");
-    const [isNotesLoaded, setIsNotesLoaded] = useState(false);
-    const [isNotesLoading, setIsNotesLoading] = useState(false);
+    const [noteContent, setNoteContent] = useState(notes || "");
 
     // Observer para carga diferida (Intersection Observer)
     useEffect(() => {
@@ -281,27 +281,10 @@ export function AdCard({
 
     const handleToggleNotes = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        const willShow = !showNotes;
-        setShowNotes(willShow);
-
-        if (willShow && !isNotesLoaded && !isNotesLoading) {
-            setIsNotesLoading(true);
-            try {
-                const res = await api.get(`/pages/${pageId}/notes`);
-                if (res.notes) {
-                    setNoteContent(res.notes);
-                }
-                setIsNotesLoaded(true);
-            } catch (err) {
-                console.error("Failed to load notes", err);
-            } finally {
-                setIsNotesLoading(false);
-            }
-        }
+        setShowNotes(!showNotes);
     };
 
     const handleNoteBlur = async () => {
-        if (!isNotesLoaded) return;
         try {
             await api.patch(`/pages/${pageId}/notes`, { notes: noteContent });
         } catch (err) {
@@ -663,32 +646,25 @@ export function AdCard({
             {/* Notes Panel */}
             {showNotes && (
                 <div style={{ padding: '12px', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }} onClick={e => e.stopPropagation()}>
-                    {isNotesLoading ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '13px' }}>
-                            <Loader2 size={16} style={{ animation: 'spin 1.5s linear infinite' }} />
-                            Loading notes...
-                        </div>
-                    ) : (
-                        <textarea
-                            value={noteContent}
-                            onChange={(e) => setNoteContent(e.target.value)}
-                            onBlur={handleNoteBlur}
-                            placeholder="Add notes for this page here... (Saves automatically when you click outside)"
-                            style={{
-                                width: '100%',
-                                minHeight: '80px',
-                                padding: '10px',
-                                borderRadius: '6px',
-                                border: '1px solid #cbd5e1',
-                                fontSize: '13px',
-                                color: '#334155',
-                                resize: 'vertical',
-                                boxSizing: 'border-box',
-                                fontFamily: 'inherit',
-                                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
-                            }}
-                        />
-                    )}
+                    <textarea
+                        value={noteContent}
+                        onChange={(e) => setNoteContent(e.target.value)}
+                        onBlur={handleNoteBlur}
+                        placeholder="Add notes for this page here... (Saves automatically when you click outside)"
+                        style={{
+                            width: '100%',
+                            minHeight: '80px',
+                            padding: '10px',
+                            borderRadius: '6px',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '13px',
+                            color: '#334155',
+                            resize: 'vertical',
+                            boxSizing: 'border-box',
+                            fontFamily: 'inherit',
+                            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
+                        }}
+                    />
                 </div>
             )}
 

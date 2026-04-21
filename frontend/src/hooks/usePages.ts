@@ -10,6 +10,7 @@ export interface PageData {
     active_ads_count?: number;
     manual_status: string;
     beneficiary?: string;
+    notes?: string;
     tag?: string;
     tagId?: number;
     top_creative?: {
