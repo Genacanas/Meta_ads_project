@@ -81,6 +81,12 @@ export function AdCard({
     const [isVisible, setIsVisible] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
 
+    // Notes State
+    const [showNotes, setShowNotes] = useState(false);
+    const [noteContent, setNoteContent] = useState("");
+    const [isNotesLoaded, setIsNotesLoaded] = useState(false);
+    const [isNotesLoading, setIsNotesLoading] = useState(false);
+
     // Observer para carga diferida (Intersection Observer)
     useEffect(() => {
         if (!cardRef.current) return;
@@ -270,6 +276,37 @@ export function AdCard({
             setIsGroupsPanelOpen(false);
         } catch (err: any) {
             alert("Failed to clear analysis: " + (err.message || "Unknown error"));
+        }
+    };
+
+    const handleToggleNotes = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const willShow = !showNotes;
+        setShowNotes(willShow);
+
+        if (willShow && !isNotesLoaded && !isNotesLoading) {
+            setIsNotesLoading(true);
+            try {
+                const res = await api.get(`/pages/${pageId}/notes`);
+                if (res.notes) {
+                    setNoteContent(res.notes);
+                }
+                setIsNotesLoaded(true);
+            } catch (err) {
+                console.error("Failed to load notes", err);
+            } finally {
+                setIsNotesLoading(false);
+            }
+        }
+    };
+
+    const handleNoteBlur = async () => {
+        if (!isNotesLoaded) return;
+        try {
+            await api.patch(`/pages/${pageId}/notes`, { notes: noteContent });
+        } catch (err) {
+            console.error("Failed to save notes", err);
+            alert("Failed to save note. Please try again.");
         }
     };
 
@@ -605,7 +642,55 @@ export function AdCard({
                         </button>
                     </div>
                 )}
+                
+                {/* Notes Toggle Button */}
+                <button
+                    onClick={handleToggleNotes}
+                    style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        fontSize: '12px', fontWeight: '600', padding: '5px 12px',
+                        borderRadius: '8px', border: '1px solid #d1d5db',
+                        background: showNotes ? '#e5e7eb' : '#ffffff', color: '#4b5563',
+                        cursor: 'pointer', flex: 0.8, justifyContent: 'center',
+                        transition: 'background-color 0.2s'
+                    }}
+                    title="View and edit notes for this page"
+                >
+                    📝 {showNotes ? 'Hide Notes' : 'Notes'}
+                </button>
             </div>
+
+            {/* Notes Panel */}
+            {showNotes && (
+                <div style={{ padding: '12px', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }} onClick={e => e.stopPropagation()}>
+                    {isNotesLoading ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '13px' }}>
+                            <Loader2 size={16} style={{ animation: 'spin 1.5s linear infinite' }} />
+                            Loading notes...
+                        </div>
+                    ) : (
+                        <textarea
+                            value={noteContent}
+                            onChange={(e) => setNoteContent(e.target.value)}
+                            onBlur={handleNoteBlur}
+                            placeholder="Add notes for this page here... (Saves automatically when you click outside)"
+                            style={{
+                                width: '100%',
+                                minHeight: '80px',
+                                padding: '10px',
+                                borderRadius: '6px',
+                                border: '1px solid #cbd5e1',
+                                fontSize: '13px',
+                                color: '#334155',
+                                resize: 'vertical',
+                                boxSizing: 'border-box',
+                                fontFamily: 'inherit',
+                                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
+                            }}
+                        />
+                    )}
+                </div>
+            )}
 
             {/* Groups Panel */}
             {isGroupsPanelOpen && (

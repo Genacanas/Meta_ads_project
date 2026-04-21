@@ -4,8 +4,9 @@ import { AdCard } from './AdCard';
 import { usePages } from '../hooks/usePages';
 import { useCountries } from '../hooks/useCountries';
 import { useTags } from '../hooks/useTags';
-import { LayoutGrid, LogOut, Trash2 } from 'lucide-react';
+import { LayoutGrid, LogOut, Trash2, Tag as TagIcon } from 'lucide-react';
 import { AddSearchTerm } from './AddSearchTerm';
+import { TagManagerModal } from './TagManagerModal';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -18,6 +19,7 @@ export function Dashboard() {
   const [activeTab, setActiveTab] = useState<'unprocessed' | 'saved' | 'deleted'>('unprocessed');
   const [page, setPage] = useState(0);
   const [actionDate, setActionDate] = useState('');
+  const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
 
   const { logout } = useAuth();
 
@@ -123,6 +125,26 @@ export function Dashboard() {
         <h1>Ad Library Analysis</h1>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <AddSearchTerm onTermAdded={() => window.location.reload()} />
+          <button
+            onClick={() => setIsTagManagerOpen(true)}
+            title="Manage and replace tags"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '8px 12px',
+              backgroundColor: '#eff6ff',
+              color: '#1e40af',
+              border: '1px solid #bfdbfe',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 500,
+            }}
+          >
+            <TagIcon size={14} />
+            Manage Tags
+          </button>
           <button
             onClick={handleClearAllAnalysis}
             title="Clear all analyzed groups (Caution!)"
@@ -292,6 +314,12 @@ export function Dashboard() {
           </>
         )}
       </main>
+
+      <TagManagerModal 
+        isOpen={isTagManagerOpen} 
+        onClose={() => setIsTagManagerOpen(false)} 
+        onTagsChanged={() => window.location.reload()} 
+      />
     </div>
   );
 }

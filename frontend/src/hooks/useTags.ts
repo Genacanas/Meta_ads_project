@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { api } from '../lib/api';
 
 export interface Tag {
@@ -10,30 +10,21 @@ export function useTags() {
     const [tags, setTags] = useState<Tag[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        let isMounted = true;
-        async function fetchTags() {
-            try {
-                setLoading(true);
-                const data: Tag[] = await api.get('/tags');
-                if (isMounted) {
-                    setTags(data);
-                }
-            } catch (err) {
-                console.error("Failed to fetch tags:", err);
-            } finally {
-                if (isMounted) {
-                    setLoading(false);
-                }
-            }
+    const fetchTags = useCallback(async () => {
+        try {
+            setLoading(true);
+            const data: Tag[] = await api.get('/tags');
+            setTags(data);
+        } catch (err) {
+            console.error("Failed to fetch tags:", err);
+        } finally {
+            setLoading(false);
         }
-
-        fetchTags();
-
-        return () => {
-            isMounted = false;
-        };
     }, []);
 
-    return { tags, loading };
+    useEffect(() => {
+        fetchTags();
+    }, [fetchTags]);
+
+    return { tags, loading, refetchTags: fetchTags };
 }
