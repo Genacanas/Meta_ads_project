@@ -84,7 +84,7 @@ export function AdCard({
     const cardRef = useRef<HTMLDivElement>(null);
 
     // Notes State
-    const [showNotes, setShowNotes] = useState(false);
+    const [showNotes, setShowNotes] = useState(!!notes && notes.trim() !== "");
     const [noteContent, setNoteContent] = useState(notes || "");
 
     // Observer para carga diferida (Intersection Observer)
