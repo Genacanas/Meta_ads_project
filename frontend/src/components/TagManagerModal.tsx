@@ -11,7 +11,7 @@ interface TagManagerModalProps {
 
 export function TagManagerModal({ isOpen, onClose, onTagsChanged }: TagManagerModalProps) {
     const [activeTab, setActiveTab] = useState<'rename' | 'bulk_replace'>('rename');
-    const { tags, loading, refetchTags } = useTags();
+    const { tags, loading, ensureTagsLoaded, updateTagLocally, refreshTags } = useTags();
 
     // Rename Tab State
     const [editingTagId, setEditingTagId] = useState<number | null>(null);
@@ -29,14 +29,14 @@ export function TagManagerModal({ isOpen, onClose, onTagsChanged }: TagManagerMo
 
     useEffect(() => {
         if (isOpen) {
-            refetchTags();
+            ensureTagsLoaded();
             setMessage(null);
             setEditingTagId(null);
             setSourceTagId("");
             setTargetTagId("");
             setDeleteSource(false);
         }
-    }, [isOpen, refetchTags]);
+    }, [isOpen, ensureTagsLoaded]);
 
     useEffect(() => {
         if (message) {
@@ -52,7 +52,7 @@ export function TagManagerModal({ isOpen, onClose, onTagsChanged }: TagManagerMo
             await api.patch(`/tags/${tagId}`, { name: editingTagName.trim() });
             setMessage({ text: "Tag renamed successfully!", type: 'success' });
             setEditingTagId(null);
-            refetchTags();
+            updateTagLocally(tagId, editingTagName.trim());
             onTagsChanged();
         } catch (error: any) {
             console.error("Failed to rename tag", error);
@@ -88,7 +88,7 @@ export function TagManagerModal({ isOpen, onClose, onTagsChanged }: TagManagerMo
             setSourceTagId("");
             setTargetTagId("");
             setDeleteSource(false);
-            refetchTags();
+            refreshTags(); // Bulk replace is complex, best to refetch from server to sync state
             onTagsChanged();
         } catch (error: any) {
             console.error("Failed to replace tags", error);

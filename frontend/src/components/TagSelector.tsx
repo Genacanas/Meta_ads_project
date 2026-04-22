@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { X, Plus, Trash2, Tag as TagIcon } from 'lucide-react';
+import { useTags, Tag } from '../hooks/useTags';
 
-export interface Tag {
-    Id: number;
-    Name: string;
-}
+// Tag interface is imported from useTags hook
 
 interface TagSelectorProps {
     isOpen: boolean;
@@ -17,17 +15,16 @@ interface TagSelectorProps {
 }
 
 export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pageId, onTagUpdate }: TagSelectorProps) {
-    const [tags, setTags] = useState<Tag[]>([]);
-    const [loading, setLoading] = useState(false);
+    const { tags, loading, ensureTagsLoaded, addTagLocally, removeTagLocally, refreshTags } = useTags();
     const [newTagName, setNewTagName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     useEffect(() => {
         if (isOpen) {
-            fetchTags();
+            ensureTagsLoaded();
         }
-    }, [isOpen]);
+    }, [isOpen, ensureTagsLoaded]);
 
     // Auto-hide error message after 5 seconds
     useEffect(() => {
@@ -39,17 +36,7 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
         }
     }, [errorMsg]);
 
-    const fetchTags = async () => {
-        try {
-            setLoading(true);
-            const data = await api.get('/tags');
-            setTags(data);
-        } catch (error) {
-            console.error("Failed to fetch tags", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+
 
     const handleSelectTag = async (tag: Tag) => {
         // Optimistic UI Update
@@ -102,7 +89,7 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
             // Protect against adding duplicates to state if API returned existing
             const isAlreadyInList = tags.some(t => t.Id === newTag.Id);
             if (!isAlreadyInList) {
-                setTags([...tags, newTag]);
+                addTagLocally(newTag);
             }
 
             // Automatically select it after creation
@@ -122,8 +109,7 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
         if (!confirm("Are you sure you want to completely delete this tag from the system?")) return;
 
         // Optimistic UI updates
-        const previousTags = [...tags];
-        setTags(tags.filter(t => t.Id !== tagId));
+        removeTagLocally(tagId);
 
         const hadTag = currentTagId === tagId;
         if (hadTag) {
@@ -134,8 +120,8 @@ export function TagSelector({ isOpen, onClose, currentTagId, currentTagName, pag
             await api.delete(`/tags/${tagId}`);
         } catch (error) {
             console.error("Failed to delete tag", error);
-            // Rollback
-            setTags(previousTags);
+            // Rollback syncing with server state
+            refreshTags();
             if (hadTag) {
                 onTagUpdate(currentTagId || null, currentTagName || null);
             }
