@@ -1,4 +1,4 @@
-import React, { createContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useState, useCallback, type ReactNode } from 'react';
 import { api } from '../lib/api';
 
 export interface Tag {

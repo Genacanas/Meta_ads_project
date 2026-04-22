@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { X, Plus, Trash2, Tag as TagIcon } from 'lucide-react';
-import { useTags, Tag } from '../hooks/useTags';
+import { useTags, type Tag } from '../hooks/useTags';
 
 // Tag interface is imported from useTags hook
 
