@@ -59,6 +59,7 @@ export function FilterBar({
                         onChange={(e) => onCategoryChange(e.target.value)}
                     >
                         <option value="All">All Categories</option>
+                        <option value="Uncategorized">Uncategorized</option>
                         {PAGE_CATEGORIES.map(category => (
                             <option key={category} value={category}>{category}</option>
                         ))}
