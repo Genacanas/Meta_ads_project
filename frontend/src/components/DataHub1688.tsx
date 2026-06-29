@@ -176,7 +176,7 @@ export function DataHub1688() {
                         <div key={p.item_id || idx} className="card" style={{ background: 'var(--bg-secondary)', padding: '0', overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                           <div style={{ width: '100%', height: '220px', background: '#1a1a24', position: 'relative' }}>
                             {p.img ? (
-                              <img src={p.img} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              <img src={p.img} alt={p.title} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             ) : (
                               <div className="flex items-center justify-center" style={{ height: '100%' }}><ImageOff size={32} opacity={0.3} /></div>
                             )}
