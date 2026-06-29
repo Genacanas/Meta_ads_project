@@ -21,8 +21,21 @@ export const Login: React.FC = () => {
       formData.append('username', username);
       formData.append('password', password);
 
-      const response = await api.post('/login', formData);
-      login(response.access_token);
+      const API_URL = import.meta.env.VITE_1688_API_URL || 'http://localhost:8000/api';
+      const response = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData.toString()
+      });
+
+      if (!response.ok) {
+        throw new Error('Invalid credentials');
+      }
+
+      const data = await response.json();
+      login(data.access_token);
     } catch (err: any) {
       setError(err.message || 'Failed to login. Please check your credentials and try again.');
     } finally {
