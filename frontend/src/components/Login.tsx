@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../lib/api';
 import { Activity, Lock, User, Loader2, ChevronsRight } from 'lucide-react';
 import './Login.css';
 

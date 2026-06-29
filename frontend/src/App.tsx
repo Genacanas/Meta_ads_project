@@ -1,14 +1,11 @@
-import { useState } from 'react';
 import { useAuth } from './context/AuthContext';
 import { Login } from './components/Login';
-import { Dashboard } from './components/Dashboard';
 import { DataHub1688 } from './components/DataHub1688';
 
 import './App.css';
 
 function App() {
   const { isAuthenticated } = useAuth();
-  const [currentView, setCurrentView] = useState<'ads' | '1688'>('ads');
 
   if (!isAuthenticated) {
     return <Login />;
@@ -20,26 +17,23 @@ function App() {
         <h3 style={{ margin: 0, marginRight: '1rem', fontWeight: 600, color: '#e2e8f0' }}>Portal Empresarial</h3>
         {/* Componente viejo oculto:
         <button 
-          onClick={() => setCurrentView('ads')}
-          style={{ ... }}
+          ...
         >
           Análisis de Anuncios
         </button> */}
         
-        <button 
-          onClick={() => setCurrentView('1688')}
+        <div 
           style={{ 
             padding: '0.5rem 1rem', 
             background: '#6366f1', 
             border: 'none', 
             color: 'white', 
-            cursor: 'pointer', 
             borderRadius: '6px',
             fontWeight: 600
           }}
         >
           1688 Data Hub
-        </button>
+        </div>
       </nav>
       <div style={{ flex: 1, overflow: 'auto', background: '#0a0a0f' }}>
         <DataHub1688 />
