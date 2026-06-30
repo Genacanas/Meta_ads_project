@@ -7,13 +7,14 @@ const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api
 // ── Product card identical to DataHub1688 style ──────────────────────────────
 function ProductCard({ p }: { p: any }) {
   const productUrl = p.product_url || (p.item_id ? `https://detail.1688.com/offer/${p.item_id}.html` : null)
+  const imgSrc = p.image_url || p.img  // DB uses image_url, TMAPI uses img
   const soldCount = p.sold_count || (p.sale_info?.sale_quantity ? `${p.sale_info.sale_quantity.toLocaleString()}` : null)
 
   return (
     <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
       <div style={{ width: '100%', height: '200px', background: '#1a1a24', position: 'relative' }}>
-        {p.img ? (
-          <img src={p.img} alt={p.title} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        {imgSrc ? (
+          <img src={imgSrc} alt={p.title} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <div className="flex items-center justify-center" style={{ height: '100%' }}><ImageOff size={32} opacity={0.3} /></div>
         )}
