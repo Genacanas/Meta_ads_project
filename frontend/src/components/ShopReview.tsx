@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Store, CheckCircle, XCircle, RefreshCw } from 'lucide-react'
+import { Store, CheckCircle, XCircle, RefreshCw, Clock } from 'lucide-react'
 import './DataHub1688.css'
 
 export function ShopReview() {
@@ -65,8 +65,8 @@ export function ShopReview() {
           className="btn" 
           onClick={() => setActiveTab('pending')}
           style={{ 
-            background: activeTab === 'pending' ? 'var(--accent-primary)' : 'transparent',
-            color: activeTab === 'pending' ? 'white' : 'var(--text-secondary)'
+            background: activeTab === 'pending' ? 'rgba(234, 179, 8, 0.2)' : 'transparent',
+            color: activeTab === 'pending' ? '#eab308' : 'var(--text-secondary)'
           }}
         >
           New Shops (Pending)
@@ -75,8 +75,8 @@ export function ShopReview() {
           className="btn" 
           onClick={() => setActiveTab('tracking')}
           style={{ 
-            background: activeTab === 'tracking' ? 'var(--success)' : 'transparent',
-            color: activeTab === 'tracking' ? 'white' : 'var(--text-secondary)'
+            background: activeTab === 'tracking' ? 'rgba(34, 197, 94, 0.2)' : 'transparent',
+            color: activeTab === 'tracking' ? '#4ade80' : 'var(--text-secondary)'
           }}
         >
           Tracked Shops
@@ -85,8 +85,8 @@ export function ShopReview() {
           className="btn" 
           onClick={() => setActiveTab('discarded')}
           style={{ 
-            background: activeTab === 'discarded' ? 'var(--danger)' : 'transparent',
-            color: activeTab === 'discarded' ? 'white' : 'var(--text-secondary)'
+            background: activeTab === 'discarded' ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
+            color: activeTab === 'discarded' ? '#f87171' : 'var(--text-secondary)'
           }}
         >
           Discarded Shops
@@ -111,7 +111,7 @@ export function ShopReview() {
           <p>No shops found in this category.</p>
         </div>
       ) : (
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
           {shops.map(shop => (
             <div key={shop.id} className="card" style={{ background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
               <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: 'var(--text-primary)' }}>{shop.company_name}</h3>
@@ -121,6 +121,14 @@ export function ShopReview() {
               </div>
               
               <div className="flex gap-2">
+                {activeTab !== 'pending' && (
+                  <button 
+                    onClick={() => updateStatus(shop.company_name, 'pending')}
+                    style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: 'none', background: 'rgba(234, 179, 8, 0.2)', color: '#eab308', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontWeight: 600 }}
+                  >
+                    <Clock size={16} /> Pending
+                  </button>
+                )}
                 {activeTab !== 'tracking' && (
                   <button 
                     onClick={() => updateStatus(shop.company_name, 'tracking')}
