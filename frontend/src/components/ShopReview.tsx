@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Store, CheckCircle, XCircle, RefreshCw, Clock } from 'lucide-react'
+import { Store, CheckCircle, XCircle, RefreshCw, Clock, ExternalLink } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'
 
@@ -127,7 +127,17 @@ export function ShopReview() {
           {shops.map(shop => (
             <div key={shop.id} style={{ background: 'rgba(255,255,255,0.04)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {/* Nombre */}
-              <h3 style={{ margin: 0, fontSize: '1rem', color: '#e2e8f0', lineHeight: 1.4, wordBreak: 'break-word' }}>{shop.company_name}</h3>
+              <div>
+                <h3 style={{ margin: '0 0 0.4rem 0', fontSize: '1rem', color: '#e2e8f0', lineHeight: 1.4, wordBreak: 'break-word' }}>{shop.company_name}</h3>
+                <a
+                  href={`https://s.1688.com/company/company_search.htm?keywords=${encodeURIComponent(shop.company_name)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem', color: '#818cf8', textDecoration: 'none' }}
+                >
+                  <ExternalLink size={12} /> View on 1688
+                </a>
+              </div>
 
               {/* Stats */}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)' }}>
