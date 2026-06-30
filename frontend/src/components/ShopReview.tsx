@@ -1,45 +1,155 @@
-import { useState, useEffect } from 'react'
-import { Store, CheckCircle, XCircle, RefreshCw, Clock, ChevronLeft, Package } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package } from 'lucide-react'
+import './DataHub1688.css'
 
 const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'
 
-const actionBtn = (bg: string, color: string) => ({
-  padding: '0.5rem 1rem',
-  borderRadius: '6px',
-  border: 'none',
-  background: bg,
-  color: color,
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: '0.4rem',
-  fontWeight: 700,
-  fontSize: '0.85rem',
-} as React.CSSProperties)
+// ── Product card identical to DataHub1688 style ──────────────────────────────
+function ProductCard({ p }: { p: any }) {
+  const productUrl = p.product_url || (p.item_id ? `https://detail.1688.com/offer/${p.item_id}.html` : null)
+  const soldCount = p.sold_count || (p.sale_info?.sale_quantity ? `${p.sale_info.sale_quantity.toLocaleString()}` : null)
 
+  return (
+    <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+      <div style={{ width: '100%', height: '200px', background: '#1a1a24', position: 'relative' }}>
+        {p.img ? (
+          <img src={p.img} alt={p.title} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <div className="flex items-center justify-center" style={{ height: '100%' }}><ImageOff size={32} opacity={0.3} /></div>
+        )}
+        <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.75)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700 }}>
+          {p.currency || 'CNY'} {p.price}
+        </div>
+      </div>
+      <div style={{ padding: '0.85rem' }}>
+        <h4 style={{ fontSize: '0.88rem', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: '0 0 0.5rem' }}>
+          {p.title}
+        </h4>
+        <div className="flex justify-between items-center" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+          <span>ID: {p.item_id}</span>
+          {soldCount && <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Sales: {soldCount}</span>}
+        </div>
+        <div className="flex justify-between items-center" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+          <span>MOQ: {p.moq || '1'}</span>
+          {productUrl && (
+            <a href={productUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
+              View <ExternalLink size={12} />
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Single shop section ───────────────────────────────────────────────────────
+function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab: string, onStatusChange: (name: string, status: string) => void }) {
+  const [products, setProducts] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  // Lazy load products using IntersectionObserver
+  useEffect(() => {
+    if (!shop.member_id || loaded) return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        observer.disconnect()
+        loadProducts()
+      }
+    }, { threshold: 0.1 })
+    if (ref.current) observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [shop.member_id])
+
+  const loadProducts = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`${API_BASE}/shops/${encodeURIComponent(shop.member_id)}/products?page_size=10`)
+      const data = await res.json()
+      setProducts(data?.data?.items || [])
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+      setLoaded(true)
+    }
+  }
+
+  const actionBtn = (bg: string, color: string) => ({
+    padding: '0.45rem 0.9rem', borderRadius: '6px', border: 'none',
+    background: bg, color, cursor: 'pointer', display: 'flex',
+    alignItems: 'center', gap: '0.35rem', fontWeight: 700, fontSize: '0.82rem',
+  } as React.CSSProperties)
+
+  return (
+    <div ref={ref} style={{ marginBottom: '2.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+      {/* Shop header */}
+      <div style={{ padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div>
+          <h3 style={{ margin: '0 0 0.3rem', fontSize: '1.05rem', color: '#e2e8f0' }}>{shop.company_name}</h3>
+          <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>
+            Store Age: <strong style={{ color: '#a5b4fc' }}>{shop.shop_years} {shop.shop_years === 1 ? 'yr' : 'yrs'}</strong>
+            &nbsp;·&nbsp;
+            Score: <strong style={{ color: '#a5b4fc' }}>{shop.composite_score || 'N/A'}</strong>
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {activeTab !== 'pending' && (
+            <button onClick={() => onStatusChange(shop.company_name, 'pending')} style={actionBtn('rgba(234,179,8,0.15)', '#eab308')}>
+              <Clock size={13} /> Pending
+            </button>
+          )}
+          {activeTab !== 'tracking' && (
+            <button onClick={() => onStatusChange(shop.company_name, 'tracking')} style={actionBtn('rgba(34,197,94,0.15)', '#4ade80')}>
+              <CheckCircle size={13} /> Track
+            </button>
+          )}
+          {activeTab !== 'discarded' && (
+            <button onClick={() => onStatusChange(shop.company_name, 'discarded')} style={actionBtn('rgba(239,68,68,0.15)', '#f87171')}>
+              <XCircle size={13} /> Discard
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Products */}
+      <div style={{ padding: '1.25rem 1.5rem' }}>
+        {!shop.member_id ? (
+          <div style={{ padding: '1.5rem', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>
+            <Package size={24} style={{ marginBottom: '0.5rem', opacity: 0.4 }} />
+            <p style={{ margin: 0 }}>Products not yet fetched for this shop.</p>
+          </div>
+        ) : loading ? (
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
+            <RefreshCw size={24} color="#6366f1" style={{ marginBottom: '0.5rem' }} />
+            <p style={{ margin: 0, fontSize: '0.85rem' }}>Loading products...</p>
+          </div>
+        ) : products.length === 0 && loaded ? (
+          <div style={{ padding: '1.5rem', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>
+            No products found for this shop.
+          </div>
+        ) : (
+          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+            {products.map((p: any) => <ProductCard key={p.item_id} p={p} />)}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Main ShopReview component ────────────────────────────────────────────────
 export function ShopReview() {
   const [activeTab, setActiveTab] = useState<'pending' | 'tracking' | 'discarded'>('pending')
   const [shops, setShops] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // DEMO: abrir directamente en la tienda con productos
-  const [reviewShop, setReviewShop] = useState<any | null>({
-    company_name: '丹阳市诚众工具有限公司',
-    shop_years: 3,
-    composite_score: '4.5',
-    member_id: 'b2b-22184297109962e6c6',
-    status: 'pending'
-  })
-  const [shopProducts, setShopProducts] = useState<any[]>([])
-  const [productsLoading, setProductsLoading] = useState(false)
-
   const fetchShops = async (status: string) => {
     setLoading(true)
     setError(null)
     setShops([])
-    setReviewShop(null)
     try {
       const res = await fetch(`${API_BASE}/shops?status=${status}`)
       if (!res.ok) throw new Error('Failed to fetch shops')
@@ -53,36 +163,15 @@ export function ShopReview() {
 
   useEffect(() => { fetchShops(activeTab) }, [activeTab])
 
-  const openReview = async (shop: any) => {
-    setReviewShop(shop)
-    setShopProducts([])
-    if (!shop.member_id) return
-
-    setProductsLoading(true)
-    try {
-      const res = await fetch(`${API_BASE}/shops/${encodeURIComponent(shop.member_id)}/products?page_size=10`)
-      const data = await res.json()
-      setShopProducts(data?.data?.items || [])
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setProductsLoading(false)
-    }
-  }
-
   const updateStatus = async (companyName: string, newStatus: string) => {
     try {
       const res = await fetch(`${API_BASE}/shops/${encodeURIComponent(companyName)}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
       })
       if (!res.ok) throw new Error('Failed to update status')
       setShops(prev => prev.filter(s => s.company_name !== companyName))
-      setReviewShop(null)
-    } catch (err: any) {
-      alert(err.message)
-    }
+    } catch (err: any) { alert(err.message) }
   }
 
   const tabs = [
@@ -91,113 +180,15 @@ export function ShopReview() {
     { key: 'discarded', label: '🔴 Discarded Shops', color: '#f87171', bg: 'rgba(239,68,68,0.2)' },
   ] as const
 
-  // ── REVIEW MODE ─────────────────────────────────────────────────────────────
-  if (reviewShop) {
-    return (
-      <div style={{ padding: '2rem' }}>
-        {/* Back button + shop header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-          <button
-            onClick={() => setReviewShop(null)}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#e2e8f0', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
-          >
-            <ChevronLeft size={16} /> Back
-          </button>
-          <div>
-            <h2 style={{ margin: 0, fontSize: '1.4rem', color: '#e2e8f0' }}>{reviewShop.company_name}</h2>
-            <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)' }}>
-              Store Age: {reviewShop.shop_years} yrs &nbsp;·&nbsp; Score: {reviewShop.composite_score || 'N/A'}
-            </span>
-          </div>
-        </div>
-
-        {/* Action buttons */}
-        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem' }}>
-          {activeTab !== 'pending' && (
-            <button onClick={() => updateStatus(reviewShop.company_name, 'pending')} style={actionBtn('rgba(234,179,8,0.15)', '#eab308')}>
-              <Clock size={15} /> Move to Pending
-            </button>
-          )}
-          {activeTab !== 'tracking' && (
-            <button onClick={() => updateStatus(reviewShop.company_name, 'tracking')} style={actionBtn('rgba(34,197,94,0.15)', '#4ade80')}>
-              <CheckCircle size={15} /> Track this Shop
-            </button>
-          )}
-          {activeTab !== 'discarded' && (
-            <button onClick={() => updateStatus(reviewShop.company_name, 'discarded')} style={actionBtn('rgba(239,68,68,0.15)', '#f87171')}>
-              <XCircle size={15} /> Discard this Shop
-            </button>
-          )}
-        </div>
-
-        {/* Products */}
-        <h3 style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
-          <Package size={14} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} />
-          Top Products from this Shop
-        </h3>
-
-        {!reviewShop.member_id ? (
-          <div style={{ padding: '2rem', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
-            No member ID yet — run the scraper to fetch this shop's details.
-          </div>
-        ) : productsLoading ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
-            <RefreshCw size={32} color="#6366f1" style={{ marginBottom: '0.75rem' }} />
-            <p>Loading products...</p>
-          </div>
-        ) : shopProducts.length === 0 ? (
-          <div style={{ padding: '2rem', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
-            No products found for this shop.
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-            {shopProducts.map((item: any) => (
-              <a
-                key={item.item_id}
-                href={`https://detail.1688.com/offer/${item.item_id}.html`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ textDecoration: 'none', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column' }}
-              >
-                <img
-                  src={item.img}
-                  alt={item.title}
-                  style={{ width: '100%', aspectRatio: '1', objectFit: 'cover' }}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                />
-                <div style={{ padding: '0.75rem' }}>
-                  <p style={{ margin: '0 0 0.5rem', fontSize: '0.8rem', color: '#e2e8f0', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {item.title}
-                  </p>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
-                    <span style={{ color: '#a5b4fc', fontWeight: 700 }}>¥{item.price}</span>
-                    {item.sale_info?.sale_quantity && (
-                      <span style={{ color: 'rgba(255,255,255,0.4)' }}>{item.sale_info.sale_quantity.toLocaleString()} sold</span>
-                    )}
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  // ── SHOP LIST MODE ───────────────────────────────────────────────────────────
   return (
     <div style={{ padding: '2rem' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '1.8rem', display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0, color: '#e2e8f0' }}>
-          <Store size={28} color="#6366f1" />
-          Shop Review System
+          <Store size={28} color="#6366f1" /> Shop Review System
         </h2>
-        <button
-          onClick={() => fetchShops(activeTab)}
-          disabled={loading}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#e2e8f0', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
-        >
+        <button onClick={() => fetchShops(activeTab)} disabled={loading}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#e2e8f0', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
           <RefreshCw size={16} /> Refresh
         </button>
       </div>
@@ -205,17 +196,11 @@ export function ShopReview() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
         {tabs.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            style={{
-              padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', cursor: 'pointer',
-              fontWeight: 700, fontSize: '0.9rem',
+          <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+            style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem',
               background: activeTab === tab.key ? tab.bg : 'transparent',
               color: activeTab === tab.key ? tab.color : 'rgba(255,255,255,0.4)',
-              outline: activeTab === tab.key ? `1px solid ${tab.color}` : 'none',
-            }}
-          >
+              outline: activeTab === tab.key ? `1px solid ${tab.color}` : 'none' }}>
             {tab.label}
           </button>
         ))}
@@ -238,29 +223,9 @@ export function ShopReview() {
           <p>No shops found here.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-          {shops.map(shop => (
-            <div
-              key={shop.id}
-              onClick={() => openReview(shop)}
-              style={{ background: 'rgba(255,255,255,0.04)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', transition: 'border-color 0.2s, background 0.2s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(99,102,241,0.6)'; (e.currentTarget as HTMLDivElement).style.background = 'rgba(99,102,241,0.08)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.04)' }}
-            >
-              <h3 style={{ margin: '0 0 0.75rem', fontSize: '0.95rem', color: '#e2e8f0', lineHeight: 1.4, wordBreak: 'break-word' }}>{shop.company_name}</h3>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.75rem' }}>
-                <span>Store Age: <strong style={{ color: '#a5b4fc' }}>{shop.shop_years} {shop.shop_years === 1 ? 'yr' : 'yrs'}</strong></span>
-                <span>Score: <strong style={{ color: '#a5b4fc' }}>{shop.composite_score || 'N/A'}</strong></span>
-              </div>
-              <div style={{ fontSize: '0.78rem', color: shop.member_id ? '#4ade80' : 'rgba(255,255,255,0.3)', marginBottom: '0.75rem' }}>
-                {shop.member_id ? '✓ Products available' : '○ Click to review'}
-              </div>
-              <div style={{ fontSize: '0.75rem', color: 'rgba(99,102,241,0.8)', fontWeight: 600 }}>
-                Click to review →
-              </div>
-            </div>
-          ))}
-        </div>
+        shops.map(shop => (
+          <ShopSection key={shop.id} shop={shop} activeTab={activeTab} onStatusChange={updateStatus} />
+        ))
       )}
     </div>
   )
