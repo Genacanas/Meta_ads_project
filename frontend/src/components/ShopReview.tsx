@@ -112,6 +112,16 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
               <Clock size={13} /> Pending
             </button>
           )}
+          {shop.shop_url && (
+            <a 
+              href={shop.shop_url.replace('/page/index.html', '/page/offerlist.htm')} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style={{ ...actionBtn('rgba(99,102,241,0.15)', '#6366f1'), textDecoration: 'none' }}
+            >
+              <ExternalLink size={13} /> View Shop
+            </a>
+          )}
           {activeTab !== 'tracking' && (
             <button onClick={() => onStatusChange(shop.company_name, 'tracking')} style={actionBtn('rgba(34,197,94,0.15)', '#4ade80')}>
               <CheckCircle size={13} /> Track
