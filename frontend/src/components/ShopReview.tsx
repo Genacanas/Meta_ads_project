@@ -8,15 +8,8 @@ const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api
 function ProductCard({ p }: { p: any }) {
   const productUrl = p.product_url || (p.item_id ? `https://detail.1688.com/offer/${p.item_id}.html` : null)
   const imgSrc = p.image_url || p.img  // DB uses image_url, TMAPI uses img
-  
-  const formatSales = (val: any) => {
-    if (!val) return null
-    const num = Number(val)
-    if (isNaN(num)) return val
-    if (num >= 1000) return Math.floor(num / 1000) + 'K+'
-    return num.toString()
-  }
-  const soldCount = formatSales(p.sold_count || p.sale_info?.sale_quantity)
+  const rawSales = p.sold_count || p.sale_info?.sale_quantity
+  const soldCountText = rawSales ? Number(rawSales).toLocaleString() : null
 
   return (
     <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
@@ -26,20 +19,17 @@ function ProductCard({ p }: { p: any }) {
         ) : (
           <div className="flex items-center justify-center" style={{ height: '100%' }}><ImageOff size={32} opacity={0.3} /></div>
         )}
-        <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
-          {p.currency || 'CNY'} {p.price}
-        </div>
       </div>
       <div style={{ padding: '1rem' }}>
         <h4 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
           {p.title}
         </h4>
-        <div className="flex justify-between items-center" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', marginTop: '0.5rem' }}>
-          <span>ID: {p.item_id}</span>
-          {soldCount && <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Sales: {soldCount}</span>}
+        <div className="flex justify-between items-center" style={{ fontSize: '0.85rem', marginBottom: '0.5rem', marginTop: '0.5rem' }}>
+          <span style={{ color: '#a5b4fc', fontWeight: 700 }}>¥{p.price}</span>
+          {soldCountText && <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{soldCountText} sold</span>}
         </div>
         <div className="flex justify-between items-center" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-          <span>MOQ: {p.moq || '1'}</span>
+          <span>ID: {p.item_id}</span>
           {productUrl && (
             <a href={productUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
               View <ExternalLink size={12} />
