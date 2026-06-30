@@ -165,7 +165,16 @@ export function ShopReview() {
     try {
       const res = await fetch(`${API_BASE}/shops?status=${status}`)
       if (!res.ok) throw new Error('Failed to fetch shops')
-      setShops(await res.json())
+      const data = await res.json()
+      
+      // Sort shops so those with products (member_id exists) show up at the very top
+      const sortedShops = data.sort((a: any, b: any) => {
+        if (a.member_id && !b.member_id) return -1
+        if (!a.member_id && b.member_id) return 1
+        return 0
+      })
+      
+      setShops(sortedShops)
     } catch (err: any) {
       setError(err.message)
     } finally {
