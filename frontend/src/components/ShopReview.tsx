@@ -115,8 +115,8 @@ export function ShopReview() {
           {shops.map(shop => (
             <div key={shop.id} className="card" style={{ background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
               <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: 'var(--text-primary)' }}>{shop.company_name}</h3>
-              <div className="flex justify-between" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                <span>Years: <strong>{shop.shop_years}</strong></span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                <span>Store Age: <strong>{shop.shop_years} {shop.shop_years === 1 ? 'Year' : 'Years'}</strong></span>
                 <span>Score: <strong>{shop.composite_score || 'N/A'}</strong></span>
               </div>
               
