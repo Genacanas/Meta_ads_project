@@ -24,8 +24,14 @@ export function ShopReview() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Review mode: one shop at a time
-  const [reviewShop, setReviewShop] = useState<any | null>(null)
+  // DEMO: abrir directamente en la tienda con productos
+  const [reviewShop, setReviewShop] = useState<any | null>({
+    company_name: '丹阳市诚众工具有限公司',
+    shop_years: 3,
+    composite_score: '4.5',
+    member_id: 'b2b-22184297109962e6c6',
+    status: 'pending'
+  })
   const [shopProducts, setShopProducts] = useState<any[]>([])
   const [productsLoading, setProductsLoading] = useState(false)
 
