@@ -8,29 +8,37 @@ const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api
 function ProductCard({ p }: { p: any }) {
   const productUrl = p.product_url || (p.item_id ? `https://detail.1688.com/offer/${p.item_id}.html` : null)
   const imgSrc = p.image_url || p.img  // DB uses image_url, TMAPI uses img
-  const soldCount = p.sold_count || (p.sale_info?.sale_quantity ? `${p.sale_info.sale_quantity.toLocaleString()}` : null)
+  
+  const formatSales = (val: any) => {
+    if (!val) return null
+    const num = Number(val)
+    if (isNaN(num)) return val
+    if (num >= 1000) return Math.floor(num / 1000) + 'K+'
+    return num.toString()
+  }
+  const soldCount = formatSales(p.sold_count || p.sale_info?.sale_quantity)
 
   return (
     <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-      <div style={{ width: '100%', height: '200px', background: '#1a1a24', position: 'relative' }}>
+      <div style={{ width: '100%', height: '220px', background: '#1a1a24', position: 'relative' }}>
         {imgSrc ? (
           <img src={imgSrc} alt={p.title} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <div className="flex items-center justify-center" style={{ height: '100%' }}><ImageOff size={32} opacity={0.3} /></div>
         )}
-        <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.75)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700 }}>
+        <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
           {p.currency || 'CNY'} {p.price}
         </div>
       </div>
-      <div style={{ padding: '0.85rem' }}>
-        <h4 style={{ fontSize: '0.88rem', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: '0 0 0.5rem' }}>
+      <div style={{ padding: '1rem' }}>
+        <h4 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
           {p.title}
         </h4>
-        <div className="flex justify-between items-center" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+        <div className="flex justify-between items-center" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', marginTop: '0.5rem' }}>
           <span>ID: {p.item_id}</span>
           {soldCount && <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Sales: {soldCount}</span>}
         </div>
-        <div className="flex justify-between items-center" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+        <div className="flex justify-between items-center" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
           <span>MOQ: {p.moq || '1'}</span>
           {productUrl && (
             <a href={productUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
@@ -131,7 +139,7 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
             No products found for this shop.
           </div>
         ) : (
-          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
             {products.map((p: any) => <ProductCard key={p.item_id} p={p} />)}
           </div>
         )}
@@ -182,9 +190,10 @@ export function ShopReview() {
   ] as const
 
   return (
-    <div style={{ padding: '2rem' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
+    <div className="datahub-wrapper">
+      <div style={{ padding: '2rem' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '1.8rem', display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0, color: '#e2e8f0' }}>
           <Store size={28} color="#6366f1" /> Shop Review System
         </h2>
@@ -228,6 +237,7 @@ export function ShopReview() {
           <ShopSection key={shop.id} shop={shop} activeTab={activeTab} onStatusChange={updateStatus} />
         ))
       )}
+      </div>
     </div>
   )
 }
