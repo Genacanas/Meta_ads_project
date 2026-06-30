@@ -97,14 +97,14 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
   return (
     <div ref={ref} style={{ marginBottom: '2.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
       {/* Shop header */}
-      <div style={{ padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap', gap: '0.75rem' }}>
+      <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)' }}>
         <div>
-          <h3 style={{ margin: '0 0 0.3rem', fontSize: '1.05rem', color: '#e2e8f0' }}>{shop.company_name}</h3>
-          <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>
-            Store Age: <strong style={{ color: '#a5b4fc' }}>{shop.shop_years} {shop.shop_years === 1 ? 'yr' : 'yrs'}</strong>
-            &nbsp;·&nbsp;
-            Score: <strong style={{ color: '#a5b4fc' }}>{shop.composite_score || 'N/A'}</strong>
-          </span>
+          <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#10b981' }}>{shop.company_name}</h3>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', gap: '0.75rem' }}>
+            <span>Store Age: <strong style={{ color: '#a5b4fc' }}>{shop.store_age ? `${shop.store_age} yrs` : 'N/A'}</strong></span>
+            <span>·</span>
+            <span>Score: <strong style={{ color: '#a5b4fc' }}>{shop.composite_score || 'N/A'}</strong></span>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           {activeTab !== 'pending' && (
