@@ -9,7 +9,7 @@ import './App.css';
 function App() {
   const { isAuthenticated } = useAuth();
 
-  const [currentView, setCurrentView] = useState<'products' | 'shops'>('products');
+  const [currentView, setCurrentView] = useState<'products' | 'shops'>('shops');
 
   if (!isAuthenticated) {
     return <Login />;
