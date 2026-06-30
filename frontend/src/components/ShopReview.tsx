@@ -114,7 +114,7 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
           )}
           {shop.shop_url && (
             <a 
-              href={shop.shop_url.replace('/page/index.html', '/page/offerlist.htm').replace('winport.m.1688.com', 'winport.1688.com')} 
+              href={shop.seller_login_id ? `https://${shop.seller_login_id}.1688.com/page/offerlist.htm` : shop.shop_url} 
               target="_blank" 
               rel="noopener noreferrer" 
               style={{ ...actionBtn('rgba(99,102,241,0.15)', '#6366f1'), textDecoration: 'none' }}
