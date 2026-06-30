@@ -140,7 +140,7 @@ export function DataHub1688() {
                 <div className="flex-col items-center justify-center" style={{ height: '400px', color: 'var(--text-secondary)', textAlign: 'center' }}>
                   <PackageSearch size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
                   <h3>Select a category to preview</h3>
-                  <p style={{ marginTop: '0.5rem', maxWidth: '400px' }}>This will trigger a live API request to 1688 via TMAPI and display real-time product data.</p>
+                  <p style={{ marginTop: '0.5rem', maxWidth: '400px' }}>This will fetch cached data from our database.</p>
                 </div>
               ) : (
                 <>
@@ -168,7 +168,7 @@ export function DataHub1688() {
                   {loadingProducts ? (
                     <div className="flex-col items-center justify-center" style={{ height: '300px', color: 'var(--text-secondary)' }}>
                       <RefreshCw size={40} className="animate-pulse" style={{ marginBottom: '1rem', color: 'var(--accent-primary)' }} />
-                      <p>Scraping 1688 API...</p>
+                      <p>Fetching from database...</p>
                     </div>
                   ) : products.length > 0 ? (
                     <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
@@ -185,9 +185,13 @@ export function DataHub1688() {
                             </div>
                           </div>
                           <div style={{ padding: '1rem' }}>
-                            <h4 style={{ fontSize: '0.9rem', marginBottom: '0.75rem', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
+                            <h4 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
                               {p.title}
                             </h4>
+                            <div className="flex justify-between items-center" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', marginTop: '0.5rem' }}>
+                              <span>ID: {p.item_id}</span>
+                              {p.sold_count && <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Sales: {p.sold_count}</span>}
+                            </div>
                             <div className="flex justify-between items-center" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                               <span>MOQ: {p.moq || '1'}</span>
                               <a href={p.product_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
