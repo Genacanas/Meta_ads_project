@@ -114,7 +114,7 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
           )}
           {shop.shop_url && (
             <a 
-              href={shop.shop_url} 
+              href={shop.shop_url.replace('index.html', 'offerlist.htm')} 
               target="_blank" 
               rel="noopener noreferrer" 
               style={{ ...actionBtn('rgba(99,102,241,0.15)', '#6366f1'), textDecoration: 'none' }}
