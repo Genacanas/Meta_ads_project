@@ -54,7 +54,19 @@ export function DataHub1688() {
       const result = await res.json()
       
       if (result.data && result.data.items) {
-        setProducts(result.data.items)
+        // Parsear "82K+", "10万+", "200" a números y ordenar de mayor a menor
+        const sortedItems = result.data.items.sort((a: any, b: any) => {
+          const parseSales = (str: string) => {
+            if (!str) return 0;
+            const num = parseFloat(str.replace(/[^0-9.]/g, '')) || 0;
+            if (str.toLowerCase().includes('k')) return num * 1000;
+            if (str.includes('万') || str.toLowerCase().includes('w')) return num * 10000;
+            if (str.toLowerCase().includes('m')) return num * 1000000;
+            return num;
+          };
+          return parseSales(b.sold_count) - parseSales(a.sold_count);
+        });
+        setProducts(sortedItems)
       } else {
         setError('No items found or insufficient API balance.')
       }
