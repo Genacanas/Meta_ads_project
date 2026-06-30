@@ -114,7 +114,7 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
           )}
           {shop.shop_url && (
             <a 
-              href={`${API_BASE}/shops/redirect/${shop.member_id}`} 
+              href={shop.shop_url} 
               target="_blank" 
               rel="noopener noreferrer" 
               style={{ ...actionBtn('rgba(99,102,241,0.15)', '#6366f1'), textDecoration: 'none' }}
