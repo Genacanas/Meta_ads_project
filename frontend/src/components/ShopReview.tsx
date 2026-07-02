@@ -171,7 +171,7 @@ export function ShopReview() {
   const [totalShops, setTotalShops] = useState(0)
   const [hasMore, setHasMore] = useState(true)
 
-  const fetchShops = async (status: string, pageNum: int = 1, append: boolean = false) => {
+  const fetchShops = async (status: string, pageNum: number = 1, append: boolean = false) => {
     setLoading(true)
     setError(null)
     if (!append) setShops([])
