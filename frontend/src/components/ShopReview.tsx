@@ -77,7 +77,7 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
   const loadProducts = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/shops/${encodeURIComponent(shop.member_id)}/products?page_size=10`)
+      const res = await fetch(`${API_BASE}/shops/${encodeURIComponent(shop.member_id)}/products?page_size=20`)
       const data = await res.json()
       setProducts(data?.data?.items || [])
     } catch (e) {
