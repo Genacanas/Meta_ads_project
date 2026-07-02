@@ -167,24 +167,33 @@ export function ShopReview() {
   const [shops, setShops] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [totalShops, setTotalShops] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
 
-  const fetchShops = async (status: string) => {
+  const fetchShops = async (status: string, pageNum: int = 1, append: boolean = false) => {
     setLoading(true)
     setError(null)
-    setShops([])
+    if (!append) setShops([])
     try {
-      const res = await fetch(`${API_BASE}/shops?status=${status}`)
+      const res = await fetch(`${API_BASE}/shops?status=${status}&page=${pageNum}&limit=50`)
       if (!res.ok) throw new Error('Failed to fetch shops')
-      const data = await res.json()
+      const json = await res.json()
       
       // Sort shops so those with products (member_id exists) show up at the very top
-      const sortedShops = data.sort((a: any, b: any) => {
+      const sortedShops = json.data.sort((a: any, b: any) => {
         if (a.member_id && !b.member_id) return -1
         if (!a.member_id && b.member_id) return 1
         return 0
       })
       
-      setShops(sortedShops)
+      if (append) {
+        setShops(prev => [...prev, ...sortedShops])
+      } else {
+        setShops(sortedShops)
+      }
+      setTotalShops(json.total)
+      setHasMore(pageNum * json.limit < json.total)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -192,7 +201,10 @@ export function ShopReview() {
     }
   }
 
-  useEffect(() => { fetchShops(activeTab) }, [activeTab])
+  useEffect(() => { 
+    setPage(1)
+    fetchShops(activeTab, 1, false) 
+  }, [activeTab])
 
   const updateStatus = async (companyName: string, newStatus: string) => {
     try {
@@ -221,10 +233,10 @@ export function ShopReview() {
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ background: 'rgba(99,102,241,0.15)', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(99,102,241,0.3)', color: '#c7d2fe', fontWeight: 600, fontSize: '0.95rem' }}>
-              <strong style={{ color: '#fff', fontSize: '1.1rem' }}>{shops.length}</strong> 
+              <strong style={{ color: '#fff', fontSize: '1.1rem' }}>{totalShops}</strong> 
               {activeTab === 'pending' ? ' shops left' : activeTab === 'tracking' ? ' tracked shops' : ' discarded shops'}
             </div>
-            <button onClick={() => fetchShops(activeTab)} disabled={loading}
+            <button onClick={() => { setPage(1); fetchShops(activeTab, 1, false); }} disabled={loading}
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#e2e8f0', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
               <RefreshCw size={16} /> Refresh
             </button>
@@ -264,6 +276,19 @@ export function ShopReview() {
         shops.map(shop => (
           <ShopSection key={shop.id} shop={shop} activeTab={activeTab} onStatusChange={updateStatus} />
         ))
+      )}
+
+      {hasMore && !loading && shops.length > 0 && (
+        <div style={{ textAlign: 'center', marginTop: '2rem', paddingBottom: '2rem' }}>
+          <button onClick={() => {
+            const nextPage = page + 1
+            setPage(nextPage)
+            fetchShops(activeTab, nextPage, true)
+          }}
+          style={{ padding: '0.75rem 2rem', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '1rem' }}>
+            Load More Shops
+          </button>
+        </div>
       )}
       </div>
     </div>
