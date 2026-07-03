@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package, Calendar } from 'lucide-react'
+import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package, Calendar, Download } from 'lucide-react'
 import './DataHub1688.css'
 
 const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'
@@ -177,17 +177,25 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
   const [endDate, setEndDate] = useState(getPastDate(0))
   const [hiddenShops, setHiddenShops] = useState<Set<string>>(new Set())
 
-  const fetchDiscoveries = async (start: string, end: string) => {
+  const [hasMore, setHasMore] = useState(false)
+
+  const fetchDiscoveries = async (start: string, end: string, pageNum: number = 1, append: boolean = false) => {
     setLoading(true)
     setError(null)
+    if (!append) setProducts([])
     try {
-      const res = await fetch(`${API_BASE}/products/new-discoveries?start_date=${start}&end_date=${end}&limit=500`)
+      const res = await fetch(`${API_BASE}/products/new-discoveries?start_date=${start}&end_date=${end}&page=${pageNum}&limit=500`)
       if (!res.ok) throw new Error('Failed to fetch new discoveries')
       const json = await res.json()
       const arr = Array.isArray(json.data) ? json.data : []
-      setProducts(arr)
-      setShopsMap(json.shops || {})
-      onCountChange(arr.length)
+      if (append) {
+        setProducts(prev => [...prev, ...arr])
+      } else {
+        setProducts(arr)
+      }
+      setShopsMap(prev => ({...prev, ...(json.shops || {})}))
+      onCountChange(json.total)
+      setHasMore(pageNum * json.limit < json.total)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -195,7 +203,9 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
     }
   }
 
-  useEffect(() => { fetchDiscoveries(startDate, endDate) }, [])
+  useEffect(() => { 
+    fetchDiscoveries(startDate, endDate, 1, false) 
+  }, [])
 
   const formatDate = (iso: string) => {
     try {
@@ -255,10 +265,54 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
               style={{ background: '#1a1a24', color: '#fff', border: '1px solid var(--border-color)', padding: '0.5rem', borderRadius: '6px', outline: 'none', cursor: 'text' }}
             />
           </div>
-          <button onClick={() => fetchDiscoveries(startDate, endDate)} disabled={loading}
+          <button onClick={() => fetchDiscoveries(startDate, endDate, 1, false)} disabled={loading}
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: '#312e81', border: '1px solid #4f46e5', color: '#e0e7ff', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
             <RefreshCw size={16} /> Refresh
           </button>
+          {hasMore && (
+            <button 
+              onClick={async () => {
+                setLoading(true)
+                setError(null)
+                try {
+                  let allLoaded: any[] = []
+                  let current = 1
+                  const limit = 500
+                  let totalItems = 0
+                  let shopsAccum = {}
+                  
+                  while (true) {
+                    const res = await fetch(`${API_BASE}/products/new-discoveries?start_date=${startDate}&end_date=${endDate}&page=${current}&limit=${limit}`)
+                    if (!res.ok) throw new Error('Failed to fetch all discoveries')
+                    const json = await res.json()
+                    allLoaded.push(...json.data)
+                    shopsAccum = {...shopsAccum, ...(json.shops || {})}
+                    totalItems = json.total
+                    if (allLoaded.length >= totalItems || json.data.length < limit) {
+                      break
+                    }
+                    current++
+                  }
+
+                  setProducts(allLoaded)
+                  setShopsMap(shopsAccum)
+                  setHasMore(false)
+                  onCountChange(totalItems)
+                } catch (err: any) {
+                  setError(err.message)
+                } finally {
+                  setLoading(false)
+                }
+              }}
+              disabled={loading}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem',
+                background: '#10b981', color: '#064e3b', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700
+              }}
+            >
+              <Download size={16} /> Load All
+            </button>
+          )}
         </div>
       </div>
 
