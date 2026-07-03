@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package } from 'lucide-react'
+import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package, Calendar } from 'lucide-react'
 import './DataHub1688.css'
 
 const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'
@@ -161,9 +161,136 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
   )
 }
 
+// ── New Discoveries component ─────────────────────────────────────────────────
+function NewDiscoveries() {
+  const [products, setProducts] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [daysAgo, setDaysAgo] = useState(1)
+
+  const fetchDiscoveries = async (days: number) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`${API_BASE}/products/new-discoveries?days_ago=${days}&limit=500`)
+      if (!res.ok) throw new Error('Failed to fetch new discoveries')
+      const json = await res.json()
+      setProducts(json.data || [])
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchDiscoveries(daysAgo) }, [daysAgo])
+
+  const formatDate = (iso: string) => {
+    try {
+      return new Date(iso).toLocaleString('en-US', { timeZone: 'Europe/Vilnius', dateStyle: 'medium', timeStyle: 'short' })
+    } catch {
+      return new Date(iso).toLocaleString()
+    }
+  }
+
+  return (
+    <div style={{ padding: '1rem 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#e2e8f0', fontSize: '1.25rem' }}>Latest Discoveries</h3>
+          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Genuine new products (ID starts with 1, 13+ digits). Times in Lithuania timezone.</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Show from last:</label>
+            <select value={daysAgo} onChange={(e) => setDaysAgo(Number(e.target.value))}
+              style={{ background: '#1a1a24', color: '#fff', border: '1px solid var(--border-color)', padding: '0.5rem', borderRadius: '6px', outline: 'none', cursor: 'pointer' }}>
+              <option value={1}>1 day</option>
+              <option value={3}>3 days</option>
+              <option value={7}>7 days</option>
+              <option value={14}>14 days</option>
+              <option value={30}>30 days</option>
+            </select>
+          </div>
+          <button onClick={() => fetchDiscoveries(daysAgo)} disabled={loading}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: '#312e81', border: '1px solid #4f46e5', color: '#e0e7ff', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
+            <RefreshCw size={16} /> Refresh
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #f87171', padding: '1rem', borderRadius: '8px', color: '#fca5a5', marginBottom: '1.5rem' }}>
+          <strong>Error:</strong> {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)' }}>
+          <RefreshCw size={40} color="#6366f1" style={{ marginBottom: '1rem' }} />
+          <p>Loading latest discoveries...</p>
+        </div>
+      ) : products.length === 0 ? (
+        <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <Calendar size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+          <p>No new products discovered in the last {daysAgo} day{daysAgo > 1 ? 's' : ''}.</p>
+        </div>
+      ) : (
+        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
+          {products.map((p: any) => {
+            const productUrl = p.product_url || (p.item_id ? `https://detail.1688.com/offer/${p.item_id}.html` : null)
+            const imgSrc = p.image_url || p.img
+            const rawSales = p.sold_count
+            const soldNum = rawSales ? Number(rawSales) : null
+            const salesDisplay = soldNum ? (soldNum >= 1000 ? Math.floor(soldNum / 1000) + 'K+' : soldNum.toString()) : null
+            const dateStr = p.discovered_at ? formatDate(p.discovered_at) : null
+
+            return (
+              <div key={p.item_id} className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                <div style={{ width: '100%', height: '220px', background: '#1a1a24' }}>
+                  {imgSrc ? (
+                    <img src={imgSrc} alt={p.title} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div className="flex items-center justify-center" style={{ height: '100%' }}><ImageOff size={32} opacity={0.3} /></div>
+                  )}
+                </div>
+                <div style={{ padding: '1rem' }}>
+                  <h4 style={{ fontSize: '0.9rem', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: '0 0 0.5rem 0' }}>{p.title}</h4>
+                  <div className="flex justify-between items-center" style={{ fontSize: '0.85rem', margin: '0.5rem 0' }}>
+                    <span style={{ color: '#a5b4fc', fontWeight: 700 }}>¥{p.price}</span>
+                    {soldNum && <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{soldNum.toLocaleString()} sold</span>}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}><strong>Shop:</strong> {p.company_name}</div>
+                  <div className="flex justify-between items-center" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                    <span>ID: {p.item_id}</span>
+                    {salesDisplay && <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Sales: {salesDisplay}</span>}
+                  </div>
+                  {dateStr && (
+                    <div style={{ fontSize: '0.75rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.35rem', background: 'rgba(16,185,129,0.1)', padding: '4px 8px', borderRadius: '4px' }}>
+                      <Calendar size={12} /> {dateStr}
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    <span>MOQ: {p.moq || '1'}</span>
+                    {productUrl && (
+                      <a href={productUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
+                        View on 1688 <ExternalLink size={12} />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main ShopReview component ────────────────────────────────────────────────
 export function ShopReview() {
-  const [activeTab, setActiveTab] = useState<'pending' | 'tracking' | 'discarded'>('pending')
+  const [activeTab, setActiveTab] = useState<'new_discoveries' | 'pending' | 'tracking' | 'discarded'>('new_discoveries')
   const [shops, setShops] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -202,6 +329,7 @@ export function ShopReview() {
   }
 
   useEffect(() => { 
+    if (activeTab === 'new_discoveries') return;
     setPage(1)
     fetchShops(activeTab, 1, false) 
   }, [activeTab])
@@ -218,6 +346,7 @@ export function ShopReview() {
   }
 
   const tabs = [
+    { key: 'new_discoveries', label: '✨ New Discoveries', color: '#10b981', bg: 'rgba(16,185,129,0.2)' },
     { key: 'pending',   label: '🟡 New Shops',      color: '#eab308', bg: 'rgba(234,179,8,0.2)' },
     { key: 'tracking',  label: '🟢 Tracked Shops',   color: '#4ade80', bg: 'rgba(34,197,94,0.2)' },
     { key: 'discarded', label: '🔴 Discarded Shops', color: '#f87171', bg: 'rgba(239,68,68,0.2)' },
@@ -291,33 +420,39 @@ export function ShopReview() {
         </div>
       )}
 
-      {loading ? (
-        <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)' }}>
-          <RefreshCw size={40} color="#6366f1" style={{ marginBottom: '1rem' }} />
-          <p>Loading shops...</p>
-        </div>
-      ) : shops.length === 0 ? (
-        <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <Store size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
-          <p>No shops found here.</p>
-        </div>
+      {activeTab === 'new_discoveries' ? (
+        <NewDiscoveries />
       ) : (
-        shops.map(shop => (
-          <ShopSection key={shop.id} shop={shop} activeTab={activeTab} onStatusChange={updateStatus} />
-        ))
-      )}
+        <>
+          {loading ? (
+            <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)' }}>
+              <RefreshCw size={40} color="#6366f1" style={{ marginBottom: '1rem' }} />
+              <p>Loading shops...</p>
+            </div>
+          ) : shops.length === 0 ? (
+            <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <Store size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+              <p>No shops found here.</p>
+            </div>
+          ) : (
+            shops.map(shop => (
+              <ShopSection key={shop.id} shop={shop} activeTab={activeTab} onStatusChange={updateStatus} />
+            ))
+          )}
 
-      {hasMore && !loading && shops.length > 0 && (
-        <div style={{ textAlign: 'center', marginTop: '2rem', paddingBottom: '2rem' }}>
-          <button onClick={() => {
-            const nextPage = page + 1
-            setPage(nextPage)
-            fetchShops(activeTab, nextPage, true)
-          }}
-          style={{ padding: '0.75rem 2rem', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '1rem' }}>
-            Load More Shops
-          </button>
-        </div>
+          {hasMore && !loading && shops.length > 0 && (
+            <div style={{ textAlign: 'center', marginTop: '2rem', paddingBottom: '2rem' }}>
+              <button onClick={() => {
+                const nextPage = page + 1
+                setPage(nextPage)
+                fetchShops(activeTab, nextPage, true)
+              }}
+              style={{ padding: '0.75rem 2rem', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '1rem' }}>
+                Load More Shops
+              </button>
+            </div>
+          )}
+        </>
       )}
       </div>
     </div>
