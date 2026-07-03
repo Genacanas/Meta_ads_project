@@ -175,7 +175,8 @@ function NewDiscoveries() {
       const res = await fetch(`${API_BASE}/products/new-discoveries?days_ago=${days}&limit=500`)
       if (!res.ok) throw new Error('Failed to fetch new discoveries')
       const json = await res.json()
-      setProducts(json.data || [])
+      const result = json.data
+      setProducts(Array.isArray(result) ? result : [])
     } catch (err: any) {
       setError(err.message)
     } finally {
