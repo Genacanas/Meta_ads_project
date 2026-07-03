@@ -164,6 +164,7 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
 // ── New Discoveries component ─────────────────────────────────────────────────
 function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void }) {
   const [products, setProducts] = useState<any[]>([])
+  const [shopsMap, setShopsMap] = useState<Record<string, any>>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [daysAgo, setDaysAgo] = useState(1)
@@ -176,9 +177,9 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
       const res = await fetch(`${API_BASE}/products/new-discoveries?days_ago=${days}&limit=500`)
       if (!res.ok) throw new Error('Failed to fetch new discoveries')
       const json = await res.json()
-      const result = json.data
-      const arr = Array.isArray(result) ? result : []
+      const arr = Array.isArray(json.data) ? json.data : []
       setProducts(arr)
+      setShopsMap(json.shops || {})
       onCountChange(arr.length)
     } catch (err: any) {
       setError(err.message)
@@ -198,13 +199,20 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
   }
 
   // Group products by company_name, sort shops by count descending
-  const shopGroups: { shopName: string; shopUrl: string | null; products: any[] }[] = []
+  const shopGroups: { shopName: string; shopUrl: string | null; score: any; years: any; products: any[] }[] = []
   const seen: Record<string, number> = {}
   for (const p of products) {
     const name = p.company_name || 'Unknown Shop'
     if (seen[name] === undefined) {
+      const shopInfo = shopsMap[name] || {}
       seen[name] = shopGroups.length
-      shopGroups.push({ shopName: name, shopUrl: p.shop_url || null, products: [] })
+      shopGroups.push({
+        shopName: name,
+        shopUrl: shopInfo.shop_url || null,
+        score: shopInfo.composite_score ?? null,
+        years: shopInfo.store_age ?? null,
+        products: []
+      })
     }
     shopGroups[seen[name]].products.push(p)
   }
@@ -264,10 +272,22 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
             {/* Shop header */}
             <div style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)' }}>
               <div>
-                <h3 style={{ fontSize: '1.15rem', margin: '0 0 0.25rem 0', color: '#10b981' }}>{group.shopName}</h3>
-                <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)' }}>
-                  {group.products.length} new product{group.products.length !== 1 ? 's' : ''}
-                </span>
+                <h3 style={{ fontSize: '1.15rem', margin: '0 0 0.4rem 0', color: '#10b981' }}>{group.shopName}</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)' }}>
+                    {group.products.length} new product{group.products.length !== 1 ? 's' : ''}
+                  </span>
+                  {group.years !== null && (
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                      Store Age: <strong style={{ color: '#a5b4fc' }}>{group.years} yrs</strong>
+                    </span>
+                  )}
+                  {group.score !== null && (
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                      Score: <strong style={{ color: '#a5b4fc' }}>{group.score}</strong>
+                    </span>
+                  )}
+                </div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 {group.shopUrl && (
