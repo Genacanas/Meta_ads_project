@@ -72,7 +72,7 @@ export function NewDiscoveries() {
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [daysAgo, setDaysAgo] = useState(3)
+  const [daysAgo, setDaysAgo] = useState(1)
 
   const fetchDiscoveries = async () => {
     setLoading(true)
