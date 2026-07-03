@@ -18,10 +18,15 @@ function ProductCard({ p }: { p: any }) {
   }
   const salesBadge = formatSales(rawSales)
 
-  // Format date to Europe/Vilnius
-  const dateStr = p.discovered_at 
-    ? new Date(p.discovered_at).toLocaleString('en-US', { timeZone: 'Europe/Vilnius', dateStyle: 'medium', timeStyle: 'short' })
-    : 'Unknown Date'
+  // Format date safely
+  let dateStr = 'Unknown Date'
+  if (p.discovered_at) {
+    try {
+      dateStr = new Date(p.discovered_at).toLocaleString('en-US', { timeZone: 'Europe/Vilnius', dateStyle: 'medium', timeStyle: 'short' })
+    } catch (e) {
+      dateStr = new Date(p.discovered_at).toLocaleString() // Fallback without specific timezone/style if browser doesn't support it
+    }
+  }
 
   return (
     <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
