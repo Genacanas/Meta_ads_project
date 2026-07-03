@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package } from 'lucide-react'
+import { NewDiscoveries } from './NewDiscoveries'
 import './DataHub1688.css'
 
 const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'
@@ -160,8 +161,6 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
     </div>
   )
 }
-
-import { NewDiscoveries } from './NewDiscoveries'
 
 // ── Main ShopReview component ────────────────────────────────────────────────
 export function ShopReview() {
