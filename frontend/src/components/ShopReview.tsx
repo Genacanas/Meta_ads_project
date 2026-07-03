@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package, Calendar, Download } from 'lucide-react'
+import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package, Calendar } from 'lucide-react'
 import './DataHub1688.css'
 
 const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'
@@ -173,7 +173,7 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
     return d.toISOString().split('T')[0];
   };
 
-  const [startDate, setStartDate] = useState(getPastDate(3))
+  const [startDate, setStartDate] = useState(getPastDate(0))
   const [endDate, setEndDate] = useState(getPastDate(0))
   const [hiddenShops, setHiddenShops] = useState<Set<string>>(new Set())
 
@@ -305,12 +305,9 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
                 }
               }}
               disabled={loading}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem',
-                background: '#10b981', color: '#064e3b', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700
-              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: '#312e81', border: '1px solid #4f46e5', color: '#e0e7ff', borderRadius: '8px', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}
             >
-              <Download size={16} /> Load All
+              Load All
             </button>
           )}
         </div>
