@@ -188,9 +188,9 @@ function NewDiscoveries() {
 
   const formatDate = (iso: string) => {
     try {
-      return new Date(iso).toLocaleString('en-US', { timeZone: 'Europe/Vilnius', dateStyle: 'medium', timeStyle: 'short' })
+      return new Date(iso).toLocaleDateString('en-US', { timeZone: 'Europe/Vilnius', dateStyle: 'medium' })
     } catch {
-      return new Date(iso).toLocaleString()
+      return new Date(iso).toLocaleDateString()
     }
   }
 
@@ -198,8 +198,7 @@ function NewDiscoveries() {
     <div style={{ padding: '1rem 0' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
         <div>
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#e2e8f0', fontSize: '1.25rem' }}>Latest Discoveries</h3>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Genuine new products (ID starts with 1, 13+ digits). Times in Lithuania timezone.</p>
+          <h3 style={{ margin: 0, color: '#e2e8f0', fontSize: '1.25rem' }}>Latest Discoveries</h3>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -261,8 +260,7 @@ function NewDiscoveries() {
                     <span style={{ color: '#a5b4fc', fontWeight: 700 }}>¥{p.price}</span>
                     {soldNum && <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{soldNum.toLocaleString()} sold</span>}
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}><strong>Shop:</strong> {p.company_name}</div>
-                  <div className="flex justify-between items-center" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                  <div className="flex justify-between items-center" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
                     <span>ID: {p.item_id}</span>
                     {salesDisplay && <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Sales: {salesDisplay}</span>}
                   </div>
