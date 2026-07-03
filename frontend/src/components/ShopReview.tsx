@@ -236,6 +236,35 @@ export function ShopReview() {
               <strong style={{ color: '#fff', fontSize: '1.1rem' }}>{totalShops}</strong> 
               {activeTab === 'pending' ? ' shops left' : activeTab === 'tracking' ? ' tracked shops' : ' discarded shops'}
             </div>
+            {hasMore && (
+              <button 
+                onClick={async () => {
+                  setLoading(true)
+                  setError(null)
+                  try {
+                    const res = await fetch(`${API_BASE}/shops?status=${activeTab}&page=1&limit=5000`)
+                    if (!res.ok) throw new Error('Failed to fetch all shops')
+                    const json = await res.json()
+                    const sortedShops = json.data.sort((a: any, b: any) => {
+                      if (a.member_id && !b.member_id) return -1
+                      if (!a.member_id && b.member_id) return 1
+                      return 0
+                    })
+                    setShops(sortedShops)
+                    setTotalShops(json.total)
+                    setHasMore(false)
+                  } catch (err: any) {
+                    setError(err.message)
+                  } finally {
+                    setLoading(false)
+                  }
+                }}
+                disabled={loading}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: '#312e81', border: '1px solid #4f46e5', color: '#e0e7ff', borderRadius: '8px', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}
+              >
+                Load All
+              </button>
+            )}
             <button onClick={() => { setPage(1); fetchShops(activeTab, 1, false); }} disabled={loading}
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#e2e8f0', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
               <RefreshCw size={16} /> Refresh
