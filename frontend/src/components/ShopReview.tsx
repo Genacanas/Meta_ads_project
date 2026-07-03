@@ -167,14 +167,21 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
   const [shopsMap, setShopsMap] = useState<Record<string, any>>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [daysAgo, setDaysAgo] = useState(1)
+  const getPastDate = (days: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    return d.toISOString().split('T')[0];
+  };
+
+  const [startDate, setStartDate] = useState(getPastDate(3))
+  const [endDate, setEndDate] = useState(getPastDate(0))
   const [hiddenShops, setHiddenShops] = useState<Set<string>>(new Set())
 
-  const fetchDiscoveries = async (days: number) => {
+  const fetchDiscoveries = async (start: string, end: string) => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_BASE}/products/new-discoveries?days_ago=${days}&limit=500`)
+      const res = await fetch(`${API_BASE}/products/new-discoveries?start_date=${start}&end_date=${end}&limit=500`)
       if (!res.ok) throw new Error('Failed to fetch new discoveries')
       const json = await res.json()
       const arr = Array.isArray(json.data) ? json.data : []
@@ -188,7 +195,7 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
     }
   }
 
-  useEffect(() => { fetchDiscoveries(daysAgo) }, [daysAgo])
+  useEffect(() => { fetchDiscoveries(startDate, endDate) }, [])
 
   const formatDate = (iso: string) => {
     try {
@@ -233,17 +240,22 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
         <h3 style={{ margin: 0, color: '#e2e8f0', fontSize: '1.25rem' }}>Latest Discoveries</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Show from last:</label>
-            <select value={daysAgo} onChange={(e) => setDaysAgo(Number(e.target.value))}
-              style={{ background: '#1a1a24', color: '#fff', border: '1px solid var(--border-color)', padding: '0.5rem', borderRadius: '6px', outline: 'none', cursor: 'pointer' }}>
-              <option value={1}>1 day</option>
-              <option value={3}>3 days</option>
-              <option value={7}>7 days</option>
-              <option value={14}>14 days</option>
-              <option value={30}>30 days</option>
-            </select>
+            <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>From:</label>
+            <input 
+              type="date" 
+              value={startDate} 
+              onChange={(e) => setStartDate(e.target.value)}
+              style={{ background: '#1a1a24', color: '#fff', border: '1px solid var(--border-color)', padding: '0.5rem', borderRadius: '6px', outline: 'none', cursor: 'text' }}
+            />
+            <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginLeft: '0.5rem' }}>To:</label>
+            <input 
+              type="date" 
+              value={endDate} 
+              onChange={(e) => setEndDate(e.target.value)}
+              style={{ background: '#1a1a24', color: '#fff', border: '1px solid var(--border-color)', padding: '0.5rem', borderRadius: '6px', outline: 'none', cursor: 'text' }}
+            />
           </div>
-          <button onClick={() => fetchDiscoveries(daysAgo)} disabled={loading}
+          <button onClick={() => fetchDiscoveries(startDate, endDate)} disabled={loading}
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: '#312e81', border: '1px solid #4f46e5', color: '#e0e7ff', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
             <RefreshCw size={16} /> Refresh
           </button>
@@ -264,7 +276,7 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
       ) : visibleGroups.length === 0 ? (
         <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
           <Calendar size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
-          <p>No new products discovered in the last {daysAgo} day{daysAgo > 1 ? 's' : ''}.</p>
+          <p>No new products discovered between {startDate} and {endDate}.</p>
         </div>
       ) : (
         visibleGroups.map(group => (
