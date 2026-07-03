@@ -443,16 +443,31 @@ export function ShopReview() {
                   setLoading(true)
                   setError(null)
                   try {
-                    const res = await fetch(`${API_BASE}/shops?status=${activeTab}&page=1&limit=5000`)
-                    if (!res.ok) throw new Error('Failed to fetch all shops')
-                    const json = await res.json()
-                    const sortedShops = json.data.sort((a: any, b: any) => {
+                    let allLoaded: any[] = []
+                    let current = 1
+                    const limit = 1000
+                    let totalItems = 0
+                    
+                    while (true) {
+                      const res = await fetch(`${API_BASE}/shops?status=${activeTab}&page=${current}&limit=${limit}`)
+                      if (!res.ok) throw new Error('Failed to fetch all shops')
+                      const json = await res.json()
+                      allLoaded.push(...json.data)
+                      totalItems = json.total
+                      if (allLoaded.length >= totalItems || json.data.length < limit) {
+                        break
+                      }
+                      current++
+                    }
+
+                    const sortedShops = allLoaded.sort((a: any, b: any) => {
                       if (a.member_id && !b.member_id) return -1
                       if (!a.member_id && b.member_id) return 1
                       return 0
                     })
+                    
                     setShops(sortedShops)
-                    setTotalShops(json.total)
+                    setTotalShops(totalItems)
                     setHasMore(false)
                   } catch (err: any) {
                     setError(err.message)
