@@ -101,9 +101,9 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
         <div>
           <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#10b981' }}>{shop.company_name}</h3>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', gap: '0.75rem' }}>
-            <span>Store Age: <strong style={{ color: '#a5b4fc' }}>{shop.shop_years ? `${shop.shop_years} yrs` : 'N/A'}</strong></span>
+            <span>Store Age: <strong style={{ color: '#a5b4fc' }}>{shop.shop_years != null ? `${shop.shop_years} yrs` : 'N/A'}</strong></span>
             <span>·</span>
-            <span>Score: <strong style={{ color: '#a5b4fc' }}>{shop.composite_score || 'N/A'}</strong></span>
+            <span>Score: <strong style={{ color: '#a5b4fc' }}>{shop.composite_score != null ? shop.composite_score : 'N/A'}</strong></span>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
