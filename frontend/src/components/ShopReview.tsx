@@ -161,9 +161,11 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
   )
 }
 
+import { NewDiscoveries } from './NewDiscoveries'
+
 // ── Main ShopReview component ────────────────────────────────────────────────
 export function ShopReview() {
-  const [activeTab, setActiveTab] = useState<'pending' | 'tracking' | 'discarded'>('pending')
+  const [activeTab, setActiveTab] = useState<'new_discoveries' | 'pending' | 'tracking' | 'discarded'>('new_discoveries')
   const [shops, setShops] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -172,6 +174,7 @@ export function ShopReview() {
   const [hasMore, setHasMore] = useState(true)
 
   const fetchShops = async (status: string, pageNum: number = 1, append: boolean = false) => {
+    if (status === 'new_discoveries') return; // Handled by NewDiscoveries component
     setLoading(true)
     setError(null)
     if (!append) setShops([])
@@ -202,6 +205,7 @@ export function ShopReview() {
   }
 
   useEffect(() => { 
+    if (activeTab === 'new_discoveries') return;
     setPage(1)
     fetchShops(activeTab, 1, false) 
   }, [activeTab])
@@ -218,6 +222,7 @@ export function ShopReview() {
   }
 
   const tabs = [
+    { key: 'new_discoveries', label: '✨ New Discoveries', color: '#10b981', bg: 'rgba(16,185,129,0.2)' },
     { key: 'pending',   label: '🟡 New Shops',      color: '#eab308', bg: 'rgba(234,179,8,0.2)' },
     { key: 'tracking',  label: '🟢 Tracked Shops',   color: '#4ade80', bg: 'rgba(34,197,94,0.2)' },
     { key: 'discarded', label: '🔴 Discarded Shops', color: '#f87171', bg: 'rgba(239,68,68,0.2)' },
@@ -291,33 +296,39 @@ export function ShopReview() {
         </div>
       )}
 
-      {loading ? (
-        <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)' }}>
-          <RefreshCw size={40} color="#6366f1" style={{ marginBottom: '1rem' }} />
-          <p>Loading shops...</p>
-        </div>
-      ) : shops.length === 0 ? (
-        <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <Store size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
-          <p>No shops found here.</p>
-        </div>
+      {activeTab === 'new_discoveries' ? (
+        <NewDiscoveries />
       ) : (
-        shops.map(shop => (
-          <ShopSection key={shop.id} shop={shop} activeTab={activeTab} onStatusChange={updateStatus} />
-        ))
-      )}
+        <>
+          {loading ? (
+            <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)' }}>
+              <RefreshCw size={40} color="#6366f1" style={{ marginBottom: '1rem' }} />
+              <p>Loading shops...</p>
+            </div>
+          ) : shops.length === 0 ? (
+            <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <Store size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+              <p>No shops found here.</p>
+            </div>
+          ) : (
+            shops.map(shop => (
+              <ShopSection key={shop.id} shop={shop} activeTab={activeTab} onStatusChange={updateStatus} />
+            ))
+          )}
 
-      {hasMore && !loading && shops.length > 0 && (
-        <div style={{ textAlign: 'center', marginTop: '2rem', paddingBottom: '2rem' }}>
-          <button onClick={() => {
-            const nextPage = page + 1
-            setPage(nextPage)
-            fetchShops(activeTab, nextPage, true)
-          }}
-          style={{ padding: '0.75rem 2rem', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '1rem' }}>
-            Load More Shops
-          </button>
-        </div>
+          {hasMore && !loading && shops.length > 0 && (
+            <div style={{ textAlign: 'center', marginTop: '2rem', paddingBottom: '2rem' }}>
+              <button onClick={() => {
+                const nextPage = page + 1
+                setPage(nextPage)
+                fetchShops(activeTab, nextPage, true)
+              }}
+              style={{ padding: '0.75rem 2rem', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '1rem' }}>
+                Load More Shops
+              </button>
+            </div>
+          )}
+        </>
       )}
       </div>
     </div>
