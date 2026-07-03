@@ -109,5 +109,32 @@ export function usePages(
         };
     }, [country, category, searchTerm, status, minReach, tag, actionDate, page, limit]);
 
-    return { pages, setPages, loading, error, hasMore };
+    const loadAllRemaining = async () => {
+        if (!hasMore || loading) return;
+        try {
+            setLoading(true);
+            const currentStatus = status || 'unprocessed';
+            const queryParams = new URLSearchParams({
+                status: currentStatus,
+                limit: '5000',
+                offset: pages.length.toString()
+            });
+            if (country && country !== 'All') queryParams.append('country', country);
+            if (category && category !== 'All') queryParams.append('category', category);
+            if (searchTerm) queryParams.append('searchTerm', searchTerm);
+            if (minReach !== undefined && minReach !== null) queryParams.append('min_reach', minReach.toString());
+            if (tag && tag !== 'All') queryParams.append('tag', tag);
+            if (actionDate) queryParams.append('action_date', actionDate);
+
+            const data: PageData[] = await api.get(`/pages?${queryParams.toString()}`);
+            setPages(prev => [...prev, ...data]);
+            setHasMore(false);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return { pages, setPages, loading, error, hasMore, loadAllRemaining };
 }

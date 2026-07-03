@@ -36,7 +36,7 @@ export function Dashboard() {
     actionDate
   }), [selectedCountry, selectedCategory, selectedTag, searchTerm, activeTab, filterReach, actionDate]);
 
-  const { pages, setPages, loading, error, hasMore } = usePages(
+  const { pages, setPages, loading, error, hasMore, loadAllRemaining } = usePages(
     memoizedFilters,
     page
   );
@@ -125,6 +125,28 @@ export function Dashboard() {
         <h1>Ad Library Analysis</h1>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <AddSearchTerm onTermAdded={() => window.location.reload()} />
+          {hasMore && (
+            <button
+              onClick={loadAllRemaining}
+              disabled={loading}
+              title="Load all remaining pages for current filters"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '8px 12px',
+                backgroundColor: '#dbeafe',
+                color: '#1e40af',
+                border: '1px solid #bfdbfe',
+                borderRadius: '6px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontSize: '13px',
+                fontWeight: 500,
+              }}
+            >
+              {loading ? 'Loading...' : 'Load All'}
+            </button>
+          )}
           <button
             onClick={() => setIsTagManagerOpen(true)}
             title="Manage and replace tags"
