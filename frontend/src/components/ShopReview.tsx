@@ -162,7 +162,7 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
 }
 
 // ── New Discoveries component ─────────────────────────────────────────────────
-function NewDiscoveries() {
+function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void }) {
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -176,7 +176,9 @@ function NewDiscoveries() {
       if (!res.ok) throw new Error('Failed to fetch new discoveries')
       const json = await res.json()
       const result = json.data
-      setProducts(Array.isArray(result) ? result : [])
+      const arr = Array.isArray(result) ? result : []
+      setProducts(arr)
+      onCountChange(arr.length)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -296,6 +298,7 @@ export function ShopReview() {
   const [page, setPage] = useState(1)
   const [totalShops, setTotalShops] = useState(0)
   const [hasMore, setHasMore] = useState(true)
+  const [newProductsCount, setNewProductsCount] = useState(0)
 
   const fetchShops = async (status: string, pageNum: number = 1, append: boolean = false) => {
     setLoading(true)
@@ -361,10 +364,12 @@ export function ShopReview() {
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ background: 'rgba(99,102,241,0.15)', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(99,102,241,0.3)', color: '#c7d2fe', fontWeight: 600, fontSize: '0.95rem' }}>
-              <strong style={{ color: '#fff', fontSize: '1.1rem' }}>{totalShops}</strong> 
-              {activeTab === 'pending' ? ' shops left' : activeTab === 'tracking' ? ' tracked shops' : ' discarded shops'}
+              <strong style={{ color: '#fff', fontSize: '1.1rem' }}>
+                {activeTab === 'new_discoveries' ? newProductsCount : totalShops}
+              </strong>{' '}
+              {activeTab === 'new_discoveries' ? 'new products' : activeTab === 'pending' ? 'shops left' : activeTab === 'tracking' ? 'tracked shops' : 'discarded shops'}
             </div>
-            {hasMore && (
+            {hasMore && activeTab !== 'new_discoveries' && (
               <button 
                 onClick={async () => {
                   setLoading(true)
@@ -393,10 +398,12 @@ export function ShopReview() {
                 Load All
               </button>
             )}
-            <button onClick={() => { setPage(1); fetchShops(activeTab, 1, false); }} disabled={loading}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#e2e8f0', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
-              <RefreshCw size={16} /> Refresh
-            </button>
+            {activeTab !== 'new_discoveries' && (
+              <button onClick={() => { setPage(1); fetchShops(activeTab, 1, false); }} disabled={loading}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#e2e8f0', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
+                <RefreshCw size={16} /> Refresh
+              </button>
+            )}
           </div>
         </div>
 
@@ -420,7 +427,7 @@ export function ShopReview() {
       )}
 
       {activeTab === 'new_discoveries' ? (
-        <NewDiscoveries />
+        <NewDiscoveries onCountChange={setNewProductsCount} />
       ) : (
         <>
           {loading ? (
