@@ -124,6 +124,82 @@ function ProductCard({ p }: { p: any }) {
   )
 }
 
+// ── Modal for showing all products of a shop ──────────────────────────────────
+function ShopProductsModal({ companyName, onClose }: { companyName: string, onClose: () => void }) {
+  const [products, setProducts] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+
+  const fetchProducts = async (pageNum: number) => {
+    setLoading(true)
+    try {
+      const res = await fetch(`${API_BASE}/shops/name/${encodeURIComponent(companyName)}/products?page=${pageNum}&limit=100`)
+      if (!res.ok) throw new Error('Failed to fetch products')
+      const json = await res.json()
+      if (pageNum === 1) {
+        setProducts(json.data)
+      } else {
+        setProducts(prev => [...prev, ...json.data])
+      }
+      setHasMore(pageNum * json.limit < json.total)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchProducts(1)
+  }, [companyName])
+
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+      <div style={{ background: '#111118', borderRadius: '16px', border: '1px solid var(--border-color)', width: '100%', maxWidth: '1400px', height: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
+          <h2 style={{ margin: 0, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Store size={24} color="#6366f1" /> {companyName} - All Products
+          </h2>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px' }}>
+            <XCircle size={24} />
+          </button>
+        </div>
+        
+        {/* Body */}
+        <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
+          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
+            {products.map((p: any) => <ProductCard key={p.item_id} p={p} />)}
+          </div>
+          
+          {loading && (
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'rgba(255,255,255,0.4)' }}>
+              <RefreshCw size={32} color="#6366f1" className="spin" style={{ marginBottom: '1rem' }} />
+              <p>Loading products...</p>
+            </div>
+          )}
+          
+          {!loading && hasMore && (
+            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+              <button 
+                onClick={() => {
+                  const nextPage = page + 1
+                  setPage(nextPage)
+                  fetchProducts(nextPage)
+                }}
+                style={{ padding: '0.75rem 1.5rem', background: '#312e81', border: '1px solid #4f46e5', color: '#e0e7ff', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem' }}
+              >
+                Load More (100)
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Single shop section ───────────────────────────────────────────────────────
 function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab: string, onStatusChange: (name: string, status: string) => void }) {
   const [products, setProducts] = useState<any[]>([])
@@ -237,6 +313,7 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
   const [shopsMap, setShopsMap] = useState<Record<string, any>>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedShopForPopup, setSelectedShopForPopup] = useState<string | null>(null)
   const getPastDate = (days: number) => {
     const d = new Date();
     d.setDate(d.getDate() - days);
@@ -417,6 +494,10 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={() => setSelectedShopForPopup(group.shopName)}
+                  style={btnStyle('rgba(16,185,129,0.15)', '#10b981')}>
+                  <Package size={13} /> View All Products
+                </button>
                 {group.shopUrl && (
                   <a href={group.shopUrl} target="_blank" rel="noopener noreferrer"
                     style={{ ...btnStyle('rgba(99,102,241,0.15)', '#6366f1'), textDecoration: 'none' }}>
@@ -439,6 +520,13 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
             </div>
           </div>
         ))
+      )}
+
+      {selectedShopForPopup && (
+        <ShopProductsModal 
+          companyName={selectedShopForPopup} 
+          onClose={() => setSelectedShopForPopup(null)} 
+        />
       )}
     </div>
   )
