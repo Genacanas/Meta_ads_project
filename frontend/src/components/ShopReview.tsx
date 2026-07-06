@@ -75,7 +75,7 @@ function ProductCard({ p, hidePotentialBorder, onPotentialChange }: { p: any, hi
   const hasGoldenBorder = isPotential && !hidePotentialBorder
 
   return (
-    <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: hasGoldenBorder ? '2px solid #f59e0b' : '1px solid var(--border-color)', display: 'flex', flexDirection: 'column' }}>
+    <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: hasGoldenBorder ? '0 0 0 2px #f59e0b' : 'none', display: 'flex', flexDirection: 'column' }}>
       <div style={{ width: '100%', height: '220px', background: '#1a1a24', position: 'relative' }}>
         <button 
           onClick={togglePotential}
