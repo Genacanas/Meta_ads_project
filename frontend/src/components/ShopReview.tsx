@@ -110,9 +110,10 @@ function ProductCard({
         </button>
         {showReviewButton && (
           <button 
+            title="Mark as Reviewed"
             onClick={handleReview}
-            style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: '6px', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', zIndex: 10, color: '#22c55e', fontSize: '0.75rem', fontWeight: 600 }}>
-            <CheckCircle size={14} /> Reviewed
+            style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: '6px', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, color: '#22c55e' }}>
+            <CheckCircle size={16} />
           </button>
         )}
         {imgSrc ? (
@@ -387,8 +388,17 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
     return d.toISOString().split('T')[0];
   };
 
-  const [startDate, setStartDate] = useState(getPastDate(0))
-  const [endDate, setEndDate] = useState(getPastDate(0))
+  const [startDate, setStartDate] = useState(() => localStorage.getItem('newDiscoveries_startDate') || getPastDate(0))
+  const [endDate, setEndDate] = useState(() => localStorage.getItem('newDiscoveries_endDate') || getPastDate(0))
+
+  useEffect(() => {
+    localStorage.setItem('newDiscoveries_startDate', startDate)
+  }, [startDate])
+
+  useEffect(() => {
+    localStorage.setItem('newDiscoveries_endDate', endDate)
+  }, [endDate])
+
   const [hiddenShops, setHiddenShops] = useState<Set<string>>(new Set())
 
   const [hasMore, setHasMore] = useState(false)
@@ -586,11 +596,11 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
                     <ExternalLink size={13} /> View Shop
                   </a>
                 )}
-                <button onClick={() => onStatusChange(group.shopName, 'not_right_now')}
+                <button onClick={() => { onStatusChange(group.shopName, 'not_right_now'); setHiddenShops(prev => new Set([...prev, group.shopName])); }}
                   style={btnStyle('rgba(168,85,247,0.15)', '#a855f7')}>
                   <Clock size={13} /> Not Right Now
                 </button>
-                <button onClick={() => onStatusChange(group.shopName, 'discarded')}
+                <button onClick={() => { onStatusChange(group.shopName, 'discarded'); setHiddenShops(prev => new Set([...prev, group.shopName])); }}
                   style={btnStyle('rgba(239,68,68,0.15)', '#f87171')}>
                   <XCircle size={13} /> Discard
                 </button>
@@ -614,6 +624,12 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
                     }}
                   />
                 ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.5rem' }}>
+                <button onClick={() => markAsReviewed(group.shopName, group.products.map((p: any) => p.item_id))}
+                  style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid #22c55e', background: 'rgba(34,197,94,0.15)', color: '#22c55e', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, fontSize: '0.9rem' }}>
+                  <CheckCircle size={15} /> Mark all {group.products.length} products as Reviewed
+                </button>
               </div>
             </div>
           </div>
@@ -716,7 +732,14 @@ function PotentialProducts() {
 
 // ── Main ShopReview component ────────────────────────────────────────────────
 export function ShopReview() {
-  const [activeTab, setActiveTab] = useState<'new_discoveries' | 'pending' | 'tracking' | 'discarded' | 'not_right_now' | 'potential_products'>('new_discoveries')
+  const [activeTab, setActiveTab] = useState<'new_discoveries' | 'pending' | 'tracking' | 'discarded' | 'not_right_now' | 'potential_products'>(() => {
+    return (localStorage.getItem('shopReview_activeTab') as any) || 'new_discoveries'
+  })
+
+  useEffect(() => {
+    localStorage.setItem('shopReview_activeTab', activeTab)
+  }, [activeTab])
+
   const [shops, setShops] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
