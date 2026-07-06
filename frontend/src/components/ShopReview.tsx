@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
-import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package, Calendar } from 'lucide-react'
+import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package, Calendar, Sparkles } from 'lucide-react'
 import './DataHub1688.css'
 
 const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'
 
 // ── Product card identical to DataHub1688 style ──────────────────────────────
 function ProductCard({ p }: { p: any }) {
+  const [loadingAI, setLoadingAI] = useState(false)
+  const [aiSummary, setAiSummary] = useState(p.ai_summary || null)
+  const [displayTitle, setDisplayTitle] = useState(p.english_title || p.title)
+
   const productUrl = p.product_url || (p.item_id ? `https://detail.1688.com/offer/${p.item_id}.html` : null)
   const imgSrc = p.image_url || p.img  // DB uses image_url, TMAPI uses img
   const rawSales = p.sold_count || p.sale_info?.sale_quantity
@@ -20,8 +24,25 @@ function ProductCard({ p }: { p: any }) {
   }
   const salesBadge = formatSales(rawSales)
 
+  const handleAIAnalyze = async () => {
+    setLoadingAI(true)
+    try {
+      const res = await fetch(`${API_BASE}/products/${p.item_id}/ai-summary`, {
+        method: 'POST'
+      })
+      if (!res.ok) throw new Error('Failed to fetch AI summary')
+      const data = await res.json()
+      if (data.summary) setAiSummary(data.summary)
+      if (data.english_title) setDisplayTitle(data.english_title)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoadingAI(false)
+    }
+  }
+
   return (
-    <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+    <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column' }}>
       <div style={{ width: '100%', height: '220px', background: '#1a1a24', position: 'relative' }}>
         {imgSrc ? (
           <img src={imgSrc} alt={p.title} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -29,10 +50,45 @@ function ProductCard({ p }: { p: any }) {
           <div className="flex items-center justify-center" style={{ height: '100%' }}><ImageOff size={32} opacity={0.3} /></div>
         )}
       </div>
-      <div style={{ padding: '1rem' }}>
+      <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <h4 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
-          {p.title}
+          {displayTitle}
         </h4>
+        
+        {/* AI Section */}
+        <div style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+          {aiSummary ? (
+            <div style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '8px', borderRadius: '6px', fontSize: '0.8rem', color: '#c7d2fe', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px', fontWeight: 'bold' }}>
+                <Sparkles size={12} /> AI Analysis
+              </div>
+              {aiSummary}
+            </div>
+          ) : (
+            <button 
+              onClick={handleAIAnalyze}
+              disabled={loadingAI}
+              style={{
+                width: '100%',
+                background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                color: 'white',
+                border: 'none',
+                padding: '6px',
+                borderRadius: '6px',
+                fontSize: '0.8rem',
+                cursor: loadingAI ? 'wait' : 'pointer',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '6px',
+                opacity: loadingAI ? 0.7 : 1
+              }}
+            >
+              {loadingAI ? <RefreshCw size={14} className={loadingAI ? "spin" : ""} /> : <Sparkles size={14} />}
+              {loadingAI ? 'Analyzing...' : 'Analyze with AI'}
+            </button>
+          )}
+        </div>
         <div className="flex justify-between items-center" style={{ fontSize: '0.85rem', marginBottom: '0.5rem', marginTop: '0.5rem' }}>
           <span style={{ color: '#a5b4fc', fontWeight: 700 }}>¥{p.price}</span>
           {soldCountText && <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{soldCountText} sold</span>}
