@@ -125,7 +125,7 @@ function ProductCard({ p }: { p: any }) {
 }
 
 // ── Modal for showing all products of a shop ──────────────────────────────────
-function ShopProductsModal({ companyName, onClose }: { companyName: string, onClose: () => void }) {
+function ShopProductsModal({ companyName, excludeIds = [], onClose }: { companyName: string, excludeIds?: string[], onClose: () => void }) {
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -138,9 +138,9 @@ function ShopProductsModal({ companyName, onClose }: { companyName: string, onCl
       if (!res.ok) throw new Error('Failed to fetch products')
       const json = await res.json()
       if (pageNum === 1) {
-        setProducts(json.data)
+        setProducts(json.data.filter((p: any) => !excludeIds.includes(p.item_id)))
       } else {
-        setProducts(prev => [...prev, ...json.data])
+        setProducts(prev => [...prev, ...json.data.filter((p: any) => !excludeIds.includes(p.item_id))])
       }
       setHasMore(pageNum * json.limit < json.total)
     } catch (e) {
@@ -160,7 +160,7 @@ function ShopProductsModal({ companyName, onClose }: { companyName: string, onCl
         {/* Header */}
         <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
           <h2 style={{ margin: 0, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Store size={24} color="#6366f1" /> {companyName} - All Products
+            <Store size={24} color="#6366f1" /> {companyName} - Old Products
           </h2>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px' }}>
             <XCircle size={24} />
@@ -313,7 +313,7 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
   const [shopsMap, setShopsMap] = useState<Record<string, any>>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedShopForPopup, setSelectedShopForPopup] = useState<string | null>(null)
+  const [selectedShopForPopup, setSelectedShopForPopup] = useState<{name: string, excludeIds: string[]} | null>(null)
   const getPastDate = (days: number) => {
     const d = new Date();
     d.setDate(d.getDate() - days);
@@ -494,9 +494,9 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button onClick={() => setSelectedShopForPopup(group.shopName)}
+                <button onClick={() => setSelectedShopForPopup({ name: group.shopName, excludeIds: group.products.map((p: any) => p.item_id) })}
                   style={btnStyle('rgba(16,185,129,0.15)', '#10b981')}>
-                  <Package size={13} /> View All Products
+                  <Package size={13} /> View Old Products
                 </button>
                 {group.shopUrl && (
                   <a href={group.shopUrl} target="_blank" rel="noopener noreferrer"
@@ -524,7 +524,8 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
 
       {selectedShopForPopup && (
         <ShopProductsModal 
-          companyName={selectedShopForPopup} 
+          companyName={selectedShopForPopup.name} 
+          excludeIds={selectedShopForPopup.excludeIds}
           onClose={() => setSelectedShopForPopup(null)} 
         />
       )}
