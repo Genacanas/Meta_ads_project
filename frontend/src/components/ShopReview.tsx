@@ -341,8 +341,8 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
   )
 }
 
-// ── New Discoveries component ─────────────────────────────────────────────────
-function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void }) {
+// ── New Discoveries ─────────────────────────────────────────────────────────
+function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: React.Dispatch<React.SetStateAction<number>>, onStatusChange: (name: string, status: string) => void }) {
   const [products, setProducts] = useState<any[]>([])
   const [shopsMap, setShopsMap] = useState<Record<string, any>>({})
   const [loading, setLoading] = useState(false)
@@ -381,6 +381,21 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const markAsReviewed = async (shopName: string, productIds: string[]) => {
+    try {
+      const res = await fetch(`${API_BASE}/products/review`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item_ids: productIds })
+      })
+      if (!res.ok) throw new Error('Failed to mark as reviewed')
+      setHiddenShops(prev => new Set([...prev, shopName]))
+      onCountChange(prev => Math.max(0, prev - productIds.length)) // optimistic count update
+    } catch (err: any) {
+      alert(err.message)
     }
   }
 
@@ -527,7 +542,7 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
                   )}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <button onClick={() => setSelectedShopForPopup({ name: group.shopName, excludeIds: group.products.map((p: any) => p.item_id) })}
                   style={btnStyle('rgba(16,185,129,0.15)', '#10b981')}>
                   <Package size={13} /> View Old Products
@@ -538,9 +553,17 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
                     <ExternalLink size={13} /> View Shop
                   </a>
                 )}
-                <button onClick={() => setHiddenShops(prev => new Set([...prev, group.shopName]))}
+                <button onClick={() => onStatusChange(group.shopName, 'not_right_now')}
+                  style={btnStyle('rgba(168,85,247,0.15)', '#a855f7')}>
+                  <Clock size={13} /> Not Right Now
+                </button>
+                <button onClick={() => onStatusChange(group.shopName, 'discarded')}
                   style={btnStyle('rgba(239,68,68,0.15)', '#f87171')}>
-                  <XCircle size={13} /> Remove
+                  <XCircle size={13} /> Discard
+                </button>
+                <button onClick={() => markAsReviewed(group.shopName, group.products.map((p: any) => p.item_id))}
+                  style={btnStyle('rgba(34,197,94,0.15)', '#22c55e')}>
+                  <CheckCircle size={13} /> Mark as Reviewed
                 </button>
               </div>
             </div>
@@ -805,7 +828,7 @@ export function ShopReview() {
       )}
 
       {activeTab === 'new_discoveries' ? (
-        <NewDiscoveries onCountChange={setNewProductsCount} />
+        <NewDiscoveries onCountChange={setNewProductsCount} onStatusChange={updateStatus} />
       ) : activeTab === 'potential_products' ? (
         <PotentialProducts />
       ) : (
