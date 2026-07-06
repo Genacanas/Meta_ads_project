@@ -5,7 +5,19 @@ import './DataHub1688.css'
 const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'
 
 // ── Product card identical to DataHub1688 style ──────────────────────────────
-function ProductCard({ p, hidePotentialBorder, onPotentialChange }: { p: any, hidePotentialBorder?: boolean, onPotentialChange?: (item_id: string, is_potential: boolean) => void }) {
+function ProductCard({ 
+  p, 
+  hidePotentialBorder, 
+  onPotentialChange,
+  showReviewButton,
+  onReview
+}: { 
+  p: any, 
+  hidePotentialBorder?: boolean, 
+  onPotentialChange?: (item_id: string, is_potential: boolean) => void,
+  showReviewButton?: boolean,
+  onReview?: (item_id: string) => void
+}) {
   const [loadingAI, setLoadingAI] = useState(false)
   const [aiSummary, setAiSummary] = useState(p.ai_summary || null)
   const [displayTitle, setDisplayTitle] = useState(p.english_title || p.title)
@@ -72,6 +84,20 @@ function ProductCard({ p, hidePotentialBorder, onPotentialChange }: { p: any, hi
     }
   }
 
+  const handleReview = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/products/review`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item_ids: [p.item_id] })
+      })
+      if (!res.ok) throw new Error('Failed to review')
+      if (onReview) onReview(p.item_id)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   const hasGoldenBorder = isPotential && !hidePotentialBorder
 
   return (
@@ -82,6 +108,13 @@ function ProductCard({ p, hidePotentialBorder, onPotentialChange }: { p: any, hi
           style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}>
           <Star size={18} color={isPotential ? '#f59e0b' : '#fff'} fill={isPotential ? '#f59e0b' : 'none'} />
         </button>
+        {showReviewButton && (
+          <button 
+            onClick={handleReview}
+            style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: '6px', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', zIndex: 10, color: '#22c55e', fontSize: '0.75rem', fontWeight: 600 }}>
+            <CheckCircle size={14} /> Reviewed
+          </button>
+        )}
         {imgSrc ? (
           <img src={imgSrc} alt={p.title} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
@@ -425,7 +458,7 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
   }
   shopGroups.sort((a, b) => b.products.length - a.products.length)
 
-  const visibleGroups = shopGroups.filter(g => !hiddenShops.has(g.shopName))
+  const visibleGroups = shopGroups.filter(g => !hiddenShops.has(g.shopName) && g.products.length > 0)
 
   const btnStyle = (bg: string, color: string): React.CSSProperties => ({
     padding: '0.45rem 0.9rem', borderRadius: '6px', border: 'none',
@@ -571,7 +604,15 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
             <div style={{ padding: '1.25rem 1.5rem' }}>
               <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
                 {group.products.map((p: any) => (
-                  <ProductCard key={p.item_id} p={p} />
+                  <ProductCard 
+                    key={p.item_id} 
+                    p={p} 
+                    showReviewButton={true}
+                    onReview={(id) => {
+                      setProducts(prev => prev.filter(item => item.item_id !== id))
+                      onCountChange(prev => Math.max(0, prev - 1))
+                    }}
+                  />
                 ))}
               </div>
             </div>
