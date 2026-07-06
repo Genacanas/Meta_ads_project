@@ -574,12 +574,13 @@ function PotentialProducts() {
       const res = await fetch(`${API_BASE}/products/potential?page=${pageNum}&limit=100`)
       if (!res.ok) throw new Error('Failed to fetch potential products')
       const json = await res.json()
+      const arr = Array.isArray(json.data) ? json.data : []
       if (append) {
-        setProducts(prev => [...prev, ...json.data])
+        setProducts(prev => [...prev, ...arr])
       } else {
-        setProducts(json.data)
+        setProducts(arr)
       }
-      setHasMore(pageNum * json.limit < json.total)
+      setHasMore(pageNum * json.limit < (json.total || 0))
     } catch (e: any) {
       setError(e.message)
     } finally {
