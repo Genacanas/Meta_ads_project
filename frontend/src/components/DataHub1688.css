@@ -221,3 +221,21 @@
   color: var(--text-primary);
   text-decoration: none;
 }
+
+/* ── Animated review checkmark keyframes ── */
+@keyframes reviewCheckDraw {
+  from {
+    stroke-dashoffset: 18;
+    opacity: 0.3;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes reviewFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+

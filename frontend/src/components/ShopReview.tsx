@@ -4,6 +4,72 @@ import './DataHub1688.css'
 
 const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'
 
+// ── Animated Checkbox Review Button (cult-ui pathLength technique via CSS) ──────────────
+function AnimatedCheckButton({ onClick }: { onClick: () => void }) {
+  const [checked, setChecked] = useState(false)
+
+  const handleClick = () => {
+    if (checked) return
+    setChecked(true)
+    setTimeout(() => onClick(), 650)
+  }
+
+  // Circumference of the checkmark path (approx) — we animate strokeDashoffset from full to 0
+  const CIRCLE_DASH = 56.5   // 2πr for r=9
+  const CHECK_DASH  = 18     // approximate path length of the checkmark
+
+  return (
+    <button
+      title="Mark as Reviewed"
+      onClick={handleClick}
+      style={{
+        position: 'absolute', top: '8px', left: '8px',
+        background: 'rgba(0,0,0,0.65)',
+        border: 'none', borderRadius: '50%',
+        width: '32px', height: '32px',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: checked ? 'default' : 'pointer',
+        zIndex: 10, padding: 0,
+      }}
+    >
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Background fill on check */}
+        {checked && (
+          <circle cx="11" cy="11" r="9" fill="rgba(34,197,94,0.15)"
+            style={{ animation: 'reviewFadeIn 0.25s ease forwards' }} />
+        )}
+        {/* Circle ring */}
+        <circle
+          cx="11" cy="11" r="9"
+          stroke={checked ? '#22c55e' : 'rgba(255,255,255,0.6)'}
+          strokeWidth="1.8"
+          fill="none"
+          strokeDasharray={CIRCLE_DASH}
+          strokeDashoffset={checked ? 0 : 0}
+          style={{
+            transition: 'stroke 0.25s ease',
+          }}
+        />
+        {/* Animated checkmark drawn via strokeDashoffset */}
+        {checked && (
+          <path
+            d="M6.5 11.5L9.5 14.5L15.5 8.5"
+            stroke="#22c55e"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+            strokeDasharray={CHECK_DASH}
+            strokeDashoffset={CHECK_DASH}
+            style={{ animation: 'reviewCheckDraw 0.4s cubic-bezier(0.22,1,0.36,1) 0.05s forwards' }}
+          />
+        )}
+      </svg>
+    </button>
+  )
+}
+
+
 // ── Product card identical to DataHub1688 style ──────────────────────────────
 function ProductCard({ 
   p, 
@@ -109,12 +175,7 @@ function ProductCard({
           <Star size={18} color={isPotential ? '#f59e0b' : '#fff'} fill={isPotential ? '#f59e0b' : 'none'} />
         </button>
         {showReviewButton && (
-          <button 
-            title="Mark as Reviewed"
-            onClick={handleReview}
-            style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: '6px', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, color: '#22c55e' }}>
-            <CheckCircle size={16} />
-          </button>
+          <AnimatedCheckButton onClick={handleReview} />
         )}
         {imgSrc ? (
           <img src={imgSrc} alt={p.title} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
