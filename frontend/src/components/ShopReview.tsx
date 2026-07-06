@@ -5,7 +5,7 @@ import './DataHub1688.css'
 const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'
 
 // ── Product card identical to DataHub1688 style ──────────────────────────────
-function ProductCard({ p }: { p: any }) {
+function ProductCard({ p, hidePotentialBorder, onPotentialChange }: { p: any, hidePotentialBorder?: boolean, onPotentialChange?: (item_id: string, is_potential: boolean) => void }) {
   const [loadingAI, setLoadingAI] = useState(false)
   const [aiSummary, setAiSummary] = useState(p.ai_summary || null)
   const [displayTitle, setDisplayTitle] = useState(p.english_title || p.title)
@@ -14,6 +14,9 @@ function ProductCard({ p }: { p: any }) {
   const togglePotential = async () => {
     const newVal = !isPotential
     setIsPotential(newVal) // optimistic
+    if (onPotentialChange) {
+      onPotentialChange(p.item_id, newVal)
+    }
     try {
       await fetch(`${API_BASE}/products/${p.item_id}/potential`, {
         method: 'PUT',
@@ -23,6 +26,9 @@ function ProductCard({ p }: { p: any }) {
     } catch (e) {
       console.error(e)
       setIsPotential(!newVal) // revert on error
+      if (onPotentialChange) {
+        onPotentialChange(p.item_id, !newVal)
+      }
     }
   }
 
@@ -66,8 +72,10 @@ function ProductCard({ p }: { p: any }) {
     }
   }
 
+  const hasGoldenBorder = isPotential && !hidePotentialBorder
+
   return (
-    <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column' }}>
+    <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: hasGoldenBorder ? '2px solid #f59e0b' : '1px solid var(--border-color)', display: 'flex', flexDirection: 'column' }}>
       <div style={{ width: '100%', height: '220px', background: '#1a1a24', position: 'relative' }}>
         <button 
           onClick={togglePotential}
@@ -601,7 +609,18 @@ function PotentialProducts() {
       )}
       
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
-        {products.map(p => <ProductCard key={p.item_id} p={p} />)}
+        {products.map(p => (
+          <ProductCard 
+            key={p.item_id} 
+            p={p} 
+            hidePotentialBorder={true}
+            onPotentialChange={(id, isPot) => {
+              if (!isPot) {
+                setProducts(prev => prev.filter(item => item.item_id !== id))
+              }
+            }}
+          />
+        ))}
       </div>
 
       {loading && (
