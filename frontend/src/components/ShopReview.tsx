@@ -10,6 +10,15 @@ function ProductCard({ p }: { p: any }) {
   const [aiSummary, setAiSummary] = useState(p.ai_summary || null)
   const [displayTitle, setDisplayTitle] = useState(p.english_title || p.title)
 
+  const formatDate = (iso: string) => {
+    try {
+      return new Date(iso).toLocaleDateString('en-US', { timeZone: 'Europe/Vilnius', dateStyle: 'medium' })
+    } catch {
+      return new Date(iso).toLocaleDateString()
+    }
+  }
+  const dateStr = p.discovered_at ? formatDate(p.discovered_at) : null
+
   const productUrl = p.product_url || (p.item_id ? `https://detail.1688.com/offer/${p.item_id}.html` : null)
   const imgSrc = p.image_url || p.img  // DB uses image_url, TMAPI uses img
   const rawSales = p.sold_count || p.sale_info?.sale_quantity
@@ -97,6 +106,11 @@ function ProductCard({ p }: { p: any }) {
           <span>ID: {p.item_id}</span>
           {salesBadge && <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Sales: {salesBadge}</span>}
         </div>
+        {dateStr && (
+          <div style={{ fontSize: '0.75rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.5rem', background: 'rgba(16,185,129,0.1)', padding: '4px 8px', borderRadius: '4px' }}>
+            <Calendar size={12} /> {dateStr}
+          </div>
+        )}
         <div className="flex justify-between items-center" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
           <span>MOQ: {p.moq || '1'}</span>
           {productUrl && (
@@ -263,13 +277,7 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
     fetchDiscoveries(startDate, endDate, 1, false) 
   }, [])
 
-  const formatDate = (iso: string) => {
-    try {
-      return new Date(iso).toLocaleDateString('en-US', { timeZone: 'Europe/Vilnius', dateStyle: 'medium' })
-    } catch {
-      return new Date(iso).toLocaleDateString()
-    }
-  }
+
 
   // Group products by company_name, sort shops by count descending
   const shopGroups: { shopName: string; shopUrl: string | null; score: any; years: any; products: any[] }[] = []
@@ -424,49 +432,9 @@ function NewDiscoveries({ onCountChange }: { onCountChange: (n: number) => void 
             {/* Product grid */}
             <div style={{ padding: '1.25rem 1.5rem' }}>
               <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
-                {group.products.map((p: any) => {
-                  const productUrl = p.product_url || (p.item_id ? `https://detail.1688.com/offer/${p.item_id}.html` : null)
-                  const imgSrc = p.image_url || p.img
-                  const soldNum = p.sold_count ? Number(p.sold_count) : null
-                  const salesDisplay = soldNum ? (soldNum >= 1000 ? Math.floor(soldNum / 1000) + 'K+' : soldNum.toString()) : null
-                  const dateStr = p.discovered_at ? formatDate(p.discovered_at) : null
-
-                  return (
-                    <div key={p.item_id} className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                      <div style={{ width: '100%', height: '220px', background: '#1a1a24' }}>
-                        {imgSrc ? (
-                          <img src={imgSrc} alt={p.title} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                          <div className="flex items-center justify-center" style={{ height: '100%' }}><ImageOff size={32} opacity={0.3} /></div>
-                        )}
-                      </div>
-                      <div style={{ padding: '1rem' }}>
-                        <h4 style={{ fontSize: '0.9rem', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: '0 0 0.5rem 0' }}>{p.title}</h4>
-                        <div className="flex justify-between items-center" style={{ fontSize: '0.85rem', margin: '0.5rem 0' }}>
-                          <span style={{ color: '#a5b4fc', fontWeight: 700 }}>¥{p.price}</span>
-                          {soldNum && <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{soldNum.toLocaleString()} sold</span>}
-                        </div>
-                        <div className="flex justify-between items-center" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                          <span>ID: {p.item_id}</span>
-                          {salesDisplay && <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Sales: {salesDisplay}</span>}
-                        </div>
-                        {dateStr && (
-                          <div style={{ fontSize: '0.75rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.5rem', background: 'rgba(16,185,129,0.1)', padding: '4px 8px', borderRadius: '4px' }}>
-                            <Calendar size={12} /> {dateStr}
-                          </div>
-                        )}
-                        <div className="flex justify-between items-center" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          <span>MOQ: {p.moq || '1'}</span>
-                          {productUrl && (
-                            <a href={productUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
-                              View on 1688 <ExternalLink size={12} />
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
+                {group.products.map((p: any) => (
+                  <ProductCard key={p.item_id} p={p} />
+                ))}
               </div>
             </div>
           </div>
