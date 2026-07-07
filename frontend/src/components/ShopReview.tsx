@@ -85,6 +85,7 @@ function ProductCard({
   onReview?: (item_id: string) => void
 }) {
   const [loadingAI, setLoadingAI] = useState(false)
+  const [hasBeenAnalyzed, setHasBeenAnalyzed] = useState(false)
   const [aiSummary, setAiSummary] = useState(p.ai_summary || null)
   const [displayTitle, setDisplayTitle] = useState(p.english_title || p.title)
   const [isPotential, setIsPotential] = useState(p.is_potential || false)
@@ -135,6 +136,7 @@ function ProductCard({
 
   const handleAIAnalyze = async () => {
     setLoadingAI(true)
+    setHasBeenAnalyzed(true)
     try {
       const res = await fetch(`${API_BASE}/products/${p.item_id}/ai-summary`, {
         method: 'POST'
@@ -165,9 +167,11 @@ function ProductCard({
   }
 
   const hasGoldenBorder = isPotential && !hidePotentialBorder
+  const highlightShadow = hasBeenAnalyzed && !hasGoldenBorder ? '0 0 0 2px #6366f1' : 'none'
+  const finalBoxShadow = hasGoldenBorder ? '0 0 0 2px #f59e0b' : highlightShadow
 
   return (
-    <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: hasGoldenBorder ? '0 0 0 2px #f59e0b' : 'none', display: 'flex', flexDirection: 'column' }}>
+    <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: finalBoxShadow, display: 'flex', flexDirection: 'column' }}>
       <div style={{ width: '100%', height: '220px', background: '#1a1a24', position: 'relative' }}>
         <button 
           onClick={togglePotential}
@@ -850,6 +854,14 @@ export function ShopReview() {
   const [activeTab, setActiveTab] = useState<'new_discoveries' | 'pending' | 'tracking' | 'discarded' | 'not_right_now' | 'potential_products'>(() => {
     return (localStorage.getItem('shopReview_activeTab') as any) || 'new_discoveries'
   })
+  const [potentialCount, setPotentialCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    fetch(`${API_BASE}/products/potential?page=1&limit=1`)
+      .then(res => res.json())
+      .then(data => setPotentialCount(data.total || 0))
+      .catch(console.error)
+  }, [])
 
   useEffect(() => {
     localStorage.setItem('shopReview_activeTab', activeTab)
@@ -930,7 +942,7 @@ export function ShopReview() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ background: 'rgba(99,102,241,0.15)', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(99,102,241,0.3)', color: '#c7d2fe', fontWeight: 600, fontSize: '0.95rem' }}>
               <strong style={{ color: '#fff', fontSize: '1.1rem' }}>
-                {activeTab === 'new_discoveries' ? newProductsCount : activeTab === 'potential_products' ? '' : totalShops}
+                {activeTab === 'new_discoveries' ? newProductsCount : activeTab === 'potential_products' ? (potentialCount ?? '') : totalShops}
               </strong>{' '}
               {activeTab === 'new_discoveries' ? 'new products' : activeTab === 'potential_products' ? 'Saved products' : activeTab === 'pending' ? 'shops left' : activeTab === 'tracking' ? 'tracked shops' : activeTab === 'not_right_now' ? 'shops waiting' : 'discarded shops'}
             </div>
