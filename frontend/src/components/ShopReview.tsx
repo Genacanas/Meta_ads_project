@@ -167,11 +167,16 @@ function ProductCard({
   }
 
   const hasGoldenBorder = isPotential && !hidePotentialBorder
-  const highlightShadow = hasBeenAnalyzed && !hasGoldenBorder ? '0 0 0 2px #6366f1' : 'none'
-  const finalBoxShadow = hasGoldenBorder ? '0 0 0 2px #f59e0b' : highlightShadow
+  const hasDuplicateBorder = !!p.is_duplicate
+  const highlightShadow = hasBeenAnalyzed && !hasGoldenBorder && !hasDuplicateBorder ? '0 0 0 2px #6366f1' : 'none'
+  const finalBoxShadow = hasGoldenBorder
+    ? '0 0 0 2px #f59e0b'
+    : hasDuplicateBorder
+    ? '0 0 0 2px #ef4444'
+    : highlightShadow
 
   return (
-    <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: finalBoxShadow, display: 'flex', flexDirection: 'column' }}>
+    <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: hasDuplicateBorder ? '1px solid rgba(239,68,68,0.6)' : '1px solid var(--border-color)', boxShadow: finalBoxShadow, display: 'flex', flexDirection: 'column' }}>
       <div style={{ width: '100%', height: '220px', background: '#1a1a24', position: 'relative' }}>
         <button 
           onClick={togglePotential}
