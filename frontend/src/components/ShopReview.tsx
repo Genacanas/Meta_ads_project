@@ -488,7 +488,7 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
     }
   }
 
-  const markAsReviewed = async (shopName: string, productIds: string[]) => {
+  const markAsReviewed = async (shopName: string | string[], productIds: string[]) => {
     try {
       const res = await fetch(`${API_BASE}/products/review`, {
         method: 'PUT',
@@ -496,7 +496,15 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
         body: JSON.stringify({ item_ids: productIds })
       })
       if (!res.ok) throw new Error('Failed to mark as reviewed')
-      setHiddenShops(prev => new Set([...prev, shopName]))
+      setHiddenShops(prev => {
+        const next = new Set(prev)
+        if (Array.isArray(shopName)) {
+          shopName.forEach(s => next.add(s))
+        } else {
+          next.add(shopName)
+        }
+        return next
+      })
       onCountChange(prev => Math.max(0, prev - productIds.length)) // optimistic count update
     } catch (err: any) {
       alert(err.message)
@@ -530,6 +538,13 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
   shopGroups.sort((a, b) => b.products.length - a.products.length)
 
   const visibleGroups = shopGroups.filter(g => !hiddenShops.has(g.shopName) && g.products.length > 0)
+  const multiGroups = visibleGroups.filter(g => g.products.length > 1)
+  const singleGroups = visibleGroups.filter(g => g.products.length === 1)
+  const singleProducts = singleGroups.map(g => ({
+    ...g.products[0],
+    shopName: g.shopName,
+    shopUrl: g.shopUrl
+  }))
 
   const btnStyle = (bg: string, color: string): React.CSSProperties => ({
     padding: '0.45rem 0.9rem', borderRadius: '6px', border: 'none',
@@ -624,7 +639,8 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
           <p>No new products discovered between {startDate} and {endDate}.</p>
         </div>
       ) : (
-        visibleGroups.map(group => (
+        <>
+          {multiGroups.map(group => (
           <div key={group.shopName} style={{ marginBottom: '2.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
             {/* Shop header */}
             <div style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)' }}>
@@ -694,7 +710,38 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
               </div>
             </div>
           </div>
-        ))
+          ))}
+
+          {singleProducts.length > 0 && (
+            <div style={{ marginBottom: '2.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.15rem', margin: '0 0 0.4rem 0', color: '#f59e0b' }}>Single Product Shops</h3>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>These shops only have 1 new product.</span>
+                </div>
+                <button 
+                  onClick={() => markAsReviewed(
+                    singleProducts.map(p => p.shopName), 
+                    singleProducts.map(p => p.item_id)
+                  )}
+                  style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', border: '1px solid #22c55e', background: 'rgba(34,197,94,0.15)', color: '#22c55e', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, fontSize: '0.9rem' }}>
+                  <CheckCircle size={15} /> Mark all {singleProducts.length} as Reviewed
+                </button>
+              </div>
+              <div style={{ padding: '1.25rem 1.5rem' }}>
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
+                  {singleProducts.map((p: any) => (
+                    <ProductCard 
+                      key={p.item_id} 
+                      p={p} 
+                      showReviewButton={false} 
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {selectedShopForPopup && (
