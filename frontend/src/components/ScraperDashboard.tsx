@@ -6,7 +6,7 @@ const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api
 interface JobStatus {
   id: string
   job_type: string
-  status: 'running' | 'done' | 'error'
+  status: 'running' | 'done' | 'error' | 'cancelled'
   logs: string[]
   products_found: number
   shops_found: number
