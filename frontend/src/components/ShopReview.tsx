@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package, Calendar, Sparkles, Star } from 'lucide-react'
+import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package, Calendar, Sparkles, Star, AlertTriangle } from 'lucide-react'
 import './DataHub1688.css'
 
 const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'
@@ -176,6 +176,13 @@ function ProductCard({
         </button>
         {showReviewButton && (
           <AnimatedCheckButton onClick={handleReview} />
+        )}
+        {p.is_duplicate && (
+          <div 
+            title={`Possible duplicate of ${p.duplicate_of_item_id || 'another product'}`}
+            style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(239, 68, 68, 0.95)', border: '1px solid #b91c1c', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, cursor: 'help', boxShadow: '0 2px 5px rgba(0,0,0,0.3)' }}>
+            <AlertTriangle size={18} color="#fff" />
+          </div>
         )}
         {imgSrc ? (
           <img src={imgSrc} alt={p.title} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
