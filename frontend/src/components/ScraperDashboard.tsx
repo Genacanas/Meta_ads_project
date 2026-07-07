@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Terminal, RefreshCw, Play, Search, Archive, CheckCircle, XCircle } from 'lucide-react'
+import { Terminal, RefreshCw, Play, Search, Archive, CheckCircle, XCircle, Square } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'
 
@@ -102,6 +102,19 @@ export function ScraperDashboard() {
     }
   }
 
+  const stopJob = async () => {
+    if (!activeJobId) return
+    try {
+      const res = await fetch(`${API_BASE}/jobs/${activeJobId}/cancel`, { method: 'POST' })
+      if (res.ok) {
+        setJobState(prev => prev ? { ...prev, logs: [...prev.logs, "⚠️ Requesting stop..."] } : null)
+      }
+    } catch (err) {
+      console.error(err)
+      alert("Error stopping job")
+    }
+  }
+
   const btnStyle = (bg: string, color: string) => ({
     padding: '0.8rem 1.5rem',
     borderRadius: '8px',
@@ -160,15 +173,26 @@ export function ScraperDashboard() {
                 <RefreshCw size={14} className="animate-spin" color="#6366f1" />
               ) : jobState.status === 'done' ? (
                 <CheckCircle size={14} color="#22c55e" />
+              ) : jobState.status === 'cancelled' ? (
+                <XCircle size={14} color="#f59e0b" />
               ) : (
                 <XCircle size={14} color="#ef4444" />
               )}
               <strong style={{ textTransform: 'capitalize' }}>{jobState.job_type?.replace(/_/g, ' ') || 'Unknown Job'}</strong>
               <span style={{ color: '#888' }}>({jobState.status})</span>
             </div>
-            <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: '#a5b4fc' }}>
-              {jobState.shops_found > 0 && <span>+{jobState.shops_found} Shops</span>}
-              <span>+{jobState.products_found} Products</span>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: '#a5b4fc' }}>
+                {jobState.shops_found > 0 && <span>+{jobState.shops_found} Shops</span>}
+                <span>+{jobState.products_found} Products</span>
+              </div>
+              {jobState.status === 'running' && (
+                <button 
+                  onClick={stopJob}
+                  style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid #ef4444', color: '#ef4444', padding: '0.3rem 0.6rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                  <Square size={12} fill="#ef4444" /> Stop
+                </button>
+              )}
             </div>
           </div>
           <div style={{ padding: '1rem', height: '350px', overflowY: 'auto', fontFamily: 'monospace', fontSize: '0.85rem', color: '#a0a0b0', lineHeight: '1.6' }}>
@@ -212,6 +236,7 @@ export function ScraperDashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   {job.status === 'running' ? <RefreshCw size={16} className="animate-spin" color="#6366f1" /> :
                    job.status === 'done' ? <CheckCircle size={16} color="#22c55e" /> :
+                   job.status === 'cancelled' ? <XCircle size={16} color="#f59e0b" /> :
                    <XCircle size={16} color="#ef4444" />}
                   <div>
                     <div style={{ fontWeight: 600, textTransform: 'capitalize', fontSize: '0.95rem' }}>{job.job_type?.replace(/_/g, ' ') || 'Unknown Job'}</div>
