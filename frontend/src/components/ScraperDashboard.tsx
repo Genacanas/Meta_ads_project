@@ -216,7 +216,7 @@ export function ScraperDashboard() {
                   <div>
                     <div style={{ fontWeight: 600, textTransform: 'capitalize', fontSize: '0.95rem' }}>{job.job_type?.replace(/_/g, ' ') || 'Unknown Job'}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      Started: {new Date(job.started_at).toLocaleString()}
+                      Started: {new Date(job.started_at).toLocaleString('en-GB', { timeZone: 'Europe/Vilnius', dateStyle: 'short', timeStyle: 'medium' })} (LT)
                     </div>
                   </div>
                 </div>
