@@ -163,7 +163,7 @@ export function ScraperDashboard() {
               ) : (
                 <XCircle size={14} color="#ef4444" />
               )}
-              <strong style={{ textTransform: 'capitalize' }}>{jobState.job_type.replace(/_/g, ' ')}</strong>
+              <strong style={{ textTransform: 'capitalize' }}>{jobState.job_type?.replace(/_/g, ' ') || 'Unknown Job'}</strong>
               <span style={{ color: '#888' }}>({jobState.status})</span>
             </div>
             <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: '#a5b4fc' }}>
@@ -214,7 +214,7 @@ export function ScraperDashboard() {
                    job.status === 'done' ? <CheckCircle size={16} color="#22c55e" /> :
                    <XCircle size={16} color="#ef4444" />}
                   <div>
-                    <div style={{ fontWeight: 600, textTransform: 'capitalize', fontSize: '0.95rem' }}>{job.job_type.replace(/_/g, ' ')}</div>
+                    <div style={{ fontWeight: 600, textTransform: 'capitalize', fontSize: '0.95rem' }}>{job.job_type?.replace(/_/g, ' ') || 'Unknown Job'}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                       Started: {new Date(job.started_at).toLocaleString()}
                     </div>
