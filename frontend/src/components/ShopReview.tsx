@@ -480,7 +480,7 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
     setError(null)
     if (!append) setProducts([])
     try {
-      const res = await fetch(`${API_BASE}/products/new-discoveries?start_date=${start}&end_date=${end}&page=${pageNum}&limit=500`)
+      const res = await fetch(`${API_BASE}/products/new-discoveries?start_date=${start}&end_date=${end}&page=${pageNum}&limit=5000`)
       if (!res.ok) throw new Error('Failed to fetch new discoveries')
       const json = await res.json()
       const arr = Array.isArray(json.data) ? json.data : []
@@ -597,7 +597,7 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
                 try {
                   let allLoaded: any[] = []
                   let current = 1
-                  const limit = 500
+                  const limit = 5000
                   let totalItems = 0
                   let shopsAccum = {}
                   
