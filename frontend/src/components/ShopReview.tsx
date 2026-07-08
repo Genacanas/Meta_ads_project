@@ -187,11 +187,14 @@ function ProductCard({
           <AnimatedCheckButton onClick={handleReview} />
         )}
         {p.is_duplicate && (
-          <div 
-            title={`Possible duplicate of ${p.duplicate_of_item_id || 'another product'}`}
-            style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(239, 68, 68, 0.95)', border: '1px solid #b91c1c', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, cursor: 'help', boxShadow: '0 2px 5px rgba(0,0,0,0.3)' }}>
+          <a 
+            href={p.duplicate_of_item_id ? `https://detail.1688.com/offer/${p.duplicate_of_item_id}.html` : '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Possible duplicate. Click to view original product on 1688"
+            style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(239, 68, 68, 0.95)', border: '1px solid #b91c1c', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.3)', textDecoration: 'none' }}>
             <AlertTriangle size={18} color="#fff" />
-          </div>
+          </a>
         )}
         {imgSrc ? (
           <img src={imgSrc} alt={p.title} loading="lazy" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

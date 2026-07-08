@@ -10,6 +10,7 @@ interface JobStatus {
   logs: string[]
   products_found: number
   shops_found: number
+  category_stats?: Record<string, number>
   started_at: string
   completed_at?: string
   error_message?: string
@@ -231,26 +232,40 @@ export function ScraperDashboard() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {jobHistory.map((job) => (
-              <div key={job.id} style={{ background: 'var(--bg-card)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  {job.status === 'running' ? <RefreshCw size={16} className="animate-spin" color="#6366f1" /> :
-                   job.status === 'done' ? <CheckCircle size={16} color="#22c55e" /> :
-                   job.status === 'cancelled' ? <XCircle size={16} color="#f59e0b" /> :
-                   <XCircle size={16} color="#ef4444" />}
-                  <div>
-                    <div style={{ fontWeight: 600, textTransform: 'capitalize', fontSize: '0.95rem' }}>{job.job_type?.replace(/_/g, ' ') || 'Unknown Job'}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      Started: {new Date(job.started_at).toLocaleString('en-GB', { timeZone: 'Europe/Vilnius', dateStyle: 'short', timeStyle: 'medium' })} (LT)
+              <div key={job.id} style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ background: 'var(--bg-card)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    {job.status === 'running' ? <RefreshCw size={16} className="animate-spin" color="#6366f1" /> :
+                     job.status === 'done' ? <CheckCircle size={16} color="#22c55e" /> :
+                     job.status === 'cancelled' ? <XCircle size={16} color="#f59e0b" /> :
+                     <XCircle size={16} color="#ef4444" />}
+                    <div>
+                      <div style={{ fontWeight: 600, textTransform: 'capitalize', fontSize: '0.95rem' }}>{job.job_type?.replace(/_/g, ' ') || 'Unknown Job'}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        Started: {new Date(job.started_at).toLocaleString('en-GB', { timeZone: 'Europe/Vilnius', dateStyle: 'short', timeStyle: 'medium' })} (LT)
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                    <div style={{ color: '#a5b4fc' }}><strong>{job.shops_found}</strong> shops</div>
+                    <div style={{ color: '#86efac' }}><strong>{job.products_found}</strong> products</div>
+                    <div style={{ fontSize: '0.8rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', color: '#888' }}>
+                      {job.status}
                     </div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
-                  <div style={{ color: '#a5b4fc' }}><strong>{job.shops_found}</strong> shops</div>
-                  <div style={{ color: '#86efac' }}><strong>{job.products_found}</strong> products</div>
-                  <div style={{ fontSize: '0.8rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', color: '#888' }}>
-                    {job.status}
+                
+                {/* Category Breakdown (if any) */}
+                {job.category_stats && Object.keys(job.category_stats).length > 0 && (
+                  <div style={{ padding: '0.5rem 1rem 1rem 1rem', background: 'var(--bg-card)', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px', border: '1px solid var(--border-color)', borderTop: 'none', marginTop: '-0.5rem', fontSize: '0.85rem', color: '#a0a0b0', display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
+                    <div style={{ width: '100%', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.7, marginBottom: '2px' }}>Shops by Category:</div>
+                    {Object.entries(job.category_stats).map(([cat, count]) => (
+                      <div key={cat} style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)', padding: '2px 8px', borderRadius: '12px', color: '#c7d2fe' }}>
+                        {cat}: <strong>{count as React.ReactNode}</strong>
+                      </div>
+                    ))}
                   </div>
-                </div>
+                )}
               </div>
             ))}
           </div>
