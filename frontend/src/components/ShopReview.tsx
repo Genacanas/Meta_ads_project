@@ -167,7 +167,9 @@ function ProductCard({
   }
 
   const hasGoldenBorder = isPotential && !hidePotentialBorder
-  const hasDuplicateBorder = !!p.is_duplicate
+  const isExactDuplicate = p.duplicate_status === 'EXACT'
+  const isDoubtfulDuplicate = p.duplicate_status === 'DOUBTFUL'
+  const hasDuplicateBorder = isDoubtfulDuplicate || isExactDuplicate
   const highlightShadow = hasBeenAnalyzed && !hasGoldenBorder && !hasDuplicateBorder ? '0 0 0 2px #6366f1' : 'none'
   const finalBoxShadow = hasGoldenBorder
     ? '0 0 0 2px #f59e0b'
@@ -176,7 +178,7 @@ function ProductCard({
     : highlightShadow
 
   return (
-    <div className="card" style={{ background: 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: hasDuplicateBorder ? '1px solid rgba(239,68,68,0.6)' : '1px solid var(--border-color)', boxShadow: finalBoxShadow, display: 'flex', flexDirection: 'column' }}>
+    <div className="card" style={{ background: isExactDuplicate ? 'rgba(239, 68, 68, 0.3)' : 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: hasDuplicateBorder ? '1px solid rgba(239,68,68,0.6)' : '1px solid var(--border-color)', boxShadow: finalBoxShadow, display: 'flex', flexDirection: 'column' }}>
       <div style={{ width: '100%', height: '220px', background: '#1a1a24', position: 'relative' }}>
         <button 
           onClick={togglePotential}
@@ -186,12 +188,12 @@ function ProductCard({
         {showReviewButton && (
           <AnimatedCheckButton onClick={handleReview} />
         )}
-        {p.is_duplicate && (
+        {(isExactDuplicate || isDoubtfulDuplicate) && (
           <a 
             href={p.duplicate_of_item_id ? `https://detail.1688.com/offer/${p.duplicate_of_item_id}.html` : '#'}
             target="_blank"
             rel="noopener noreferrer"
-            title="Possible duplicate. Click to view original product on 1688"
+            title={isExactDuplicate ? "Exact Duplicate! Click to view original product" : "Possible duplicate. Click to view original product"}
             style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(239, 68, 68, 0.95)', border: '1px solid #b91c1c', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.3)', textDecoration: 'none' }}>
             <AlertTriangle size={18} color="#fff" />
           </a>

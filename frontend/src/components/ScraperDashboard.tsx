@@ -79,7 +79,7 @@ export function ScraperDashboard() {
     }
   }
 
-  const startJob = async (type: 'find-new-shops' | 'check-new-products') => {
+  const startJob = async (type: 'find-new-shops' | 'check-new-products' | 'manual-deduplication') => {
     if (activeJobId) return // wait for current to finish
     try {
       const res = await fetch(`${API_BASE}/jobs/${type}`, { method: 'POST' })
@@ -162,6 +162,15 @@ export function ScraperDashboard() {
           style={btnStyle('rgba(34,197,94,0.15)', '#4ade80')}>
           <Play size={18} />
           Check New Products
+        </button>
+        
+        <button 
+          onClick={() => startJob('manual-deduplication')}
+          disabled={!!activeJobId}
+          style={btnStyle('rgba(239, 68, 68, 0.15)', '#ef4444')}
+          title="Manually clean duplicates from pending discoveries">
+          <RefreshCw size={18} />
+          Clean Duplicates
         </button>
       </div>
 
