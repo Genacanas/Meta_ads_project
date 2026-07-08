@@ -21,7 +21,7 @@ export function ScraperDashboard() {
   const [jobHistory, setJobHistory] = useState<JobStatus[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   
-  const logsEndRef = useRef<HTMLDivElement>(null)
+  const logsContainerRef = useRef<HTMLDivElement>(null)
 
   // Fetch history on mount
   useEffect(() => {
@@ -56,10 +56,10 @@ export function ScraperDashboard() {
     return () => clearInterval(interval)
   }, [activeJobId])
 
-  // Auto-scroll logs
+  // Auto-scroll logs — only inside the log container, not the whole page
   useEffect(() => {
-    if (logsEndRef.current) {
-      logsEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    if (logsContainerRef.current) {
+      logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight
     }
   }, [jobState?.logs])
 
@@ -195,7 +195,7 @@ export function ScraperDashboard() {
               )}
             </div>
           </div>
-          <div style={{ padding: '1rem', height: '350px', overflowY: 'auto', fontFamily: 'monospace', fontSize: '0.85rem', color: '#a0a0b0', lineHeight: '1.6' }}>
+          <div ref={logsContainerRef} style={{ padding: '1rem', height: '350px', overflowY: 'auto', fontFamily: 'monospace', fontSize: '0.85rem', color: '#a0a0b0', lineHeight: '1.6' }}>
             {jobState.logs?.length === 0 ? (
               <span style={{ opacity: 0.5 }}>Waiting for logs... (updates every 10s)</span>
             ) : (
@@ -212,7 +212,6 @@ export function ScraperDashboard() {
                 )
               })
             )}
-            <div ref={logsEndRef} />
           </div>
         </div>
       )}
