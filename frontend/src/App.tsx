@@ -4,13 +4,14 @@ import { Login } from './components/Login';
 import { DataHub1688 } from './components/DataHub1688';
 import { ShopReview } from './components/ShopReview';
 import { ScraperDashboard } from './components/ScraperDashboard';
+import { CategoryExplorer } from './components/CategoryExplorer';
 
 import './App.css';
 
 function App() {
   const { isAuthenticated } = useAuth();
 
-  const [currentView, setCurrentView] = useState<'products' | 'shops' | 'scraper'>('shops');
+  const [currentView, setCurrentView] = useState<'products' | 'shops' | 'scraper' | 'categories'>('shops');
 
   if (!isAuthenticated) {
     return <Login />;
@@ -65,11 +66,27 @@ function App() {
         >
           🤖 Scraper
         </button>
+
+        <button 
+          onClick={() => setCurrentView('categories')}
+          style={{ 
+            padding: '0.5rem 1rem', 
+            background: currentView === 'categories' ? '#6366f1' : 'transparent', 
+            border: currentView === 'categories' ? 'none' : '1px solid rgba(255,255,255,0.2)', 
+            color: 'white', 
+            borderRadius: '6px',
+            fontWeight: 600,
+            cursor: 'pointer'
+          }}
+        >
+          📦 Categories
+        </button>
       </nav>
       <div style={{ flex: 1, overflow: 'auto', background: '#0a0a0f', padding: '1.5rem' }}>
         {currentView === 'products' && <DataHub1688 />}
         {currentView === 'shops' && <ShopReview />}
         {currentView === 'scraper' && <ScraperDashboard />}
+        {currentView === 'categories' && <CategoryExplorer />}
       </div>
     </div>
   );
