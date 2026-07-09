@@ -179,9 +179,11 @@ function ProductCard({
     ? '0 0 0 2px #ef4444'
     : highlightShadow
 
+  const blurActive = hasDuplicateBorder && isDuplicateTab
+
   return (
     <div className="card" style={{ background: isExactDuplicate ? 'rgba(239, 68, 68, 0.3)' : 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: hasDuplicateBorder ? '1px solid rgba(239,68,68,0.6)' : '1px solid var(--border-color)', boxShadow: finalBoxShadow, display: 'flex', flexDirection: 'column' }}>
-      <div className={hasDuplicateBorder && isDuplicateTab ? "duplicate-image-container" : ""} style={{ width: '100%', height: '220px', background: '#1a1a24', position: 'relative' }}>
+      <div style={{ width: '100%', height: '220px', background: '#1a1a24', position: 'relative', overflow: 'hidden' }}>
         <button 
           onClick={togglePotential}
           style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}>
@@ -201,7 +203,15 @@ function ProductCard({
           </a>
         )}
         {imgSrc ? (
-          <img src={imgSrc} alt={p.title} loading="lazy" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img
+            src={imgSrc}
+            alt={p.title}
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            onMouseEnter={blurActive ? (e) => { (e.currentTarget as HTMLImageElement).style.filter = 'none'; (e.currentTarget as HTMLImageElement).style.opacity = '1' } : undefined}
+            onMouseLeave={blurActive ? (e) => { (e.currentTarget as HTMLImageElement).style.filter = 'blur(8px) grayscale(50%)'; (e.currentTarget as HTMLImageElement).style.opacity = '0.7' } : undefined}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'filter 0.3s ease, opacity 0.3s ease', ...(blurActive ? { filter: 'blur(8px) grayscale(50%)', opacity: 0.7 } : {}) }}
+          />
         ) : (
           <div className="flex items-center justify-center" style={{ height: '100%' }}><ImageOff size={32} opacity={0.3} /></div>
         )}
