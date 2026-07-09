@@ -76,13 +76,15 @@ function ProductCard({
   hidePotentialBorder, 
   onPotentialChange,
   showReviewButton,
-  onReview
+  onReview,
+  isDuplicateTab
 }: { 
   p: any, 
   hidePotentialBorder?: boolean, 
   onPotentialChange?: (item_id: string, is_potential: boolean) => void,
   showReviewButton?: boolean,
-  onReview?: (item_id: string) => void
+  onReview?: (item_id: string) => void,
+  isDuplicateTab?: boolean
 }) {
   const [loadingAI, setLoadingAI] = useState(false)
   const [hasBeenAnalyzed, setHasBeenAnalyzed] = useState(!!p.ai_summary)
@@ -179,7 +181,7 @@ function ProductCard({
 
   return (
     <div className="card" style={{ background: isExactDuplicate ? 'rgba(239, 68, 68, 0.3)' : 'var(--bg-secondary)', padding: 0, overflow: 'hidden', borderRadius: '12px', border: hasDuplicateBorder ? '1px solid rgba(239,68,68,0.6)' : '1px solid var(--border-color)', boxShadow: finalBoxShadow, display: 'flex', flexDirection: 'column' }}>
-      <div style={{ width: '100%', height: '220px', background: '#1a1a24', position: 'relative' }}>
+      <div className={hasDuplicateBorder && isDuplicateTab ? "duplicate-image-container" : ""} style={{ width: '100%', height: '220px', background: '#1a1a24', position: 'relative' }}>
         <button 
           onClick={togglePotential}
           style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}>
@@ -199,7 +201,7 @@ function ProductCard({
           </a>
         )}
         {imgSrc ? (
-          <img src={imgSrc} alt={p.title} loading="lazy" referrerPolicy="no-referrer" className={hasDuplicateBorder ? "duplicate-image-blur" : ""} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={imgSrc} alt={p.title} loading="lazy" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <div className="flex items-center justify-center" style={{ height: '100%' }}><ImageOff size={32} opacity={0.3} /></div>
         )}
@@ -315,7 +317,7 @@ function ShopProductsModal({ companyName, excludeIds = [], onClose }: { companyN
         {/* Body */}
         <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
           <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
-            {products.map((p: any) => <ProductCard key={p.item_id} p={p} />)}
+            {products.map((p: any) => <ProductCard key={p.item_id} p={p} isDuplicateTab={activeTab === 'new_discoveries'} />)}
           </div>
           
           {loading && (
@@ -449,7 +451,7 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
           </div>
         ) : (
           <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
-            {products.map((p: any) => <ProductCard key={p.item_id} p={p} />)}
+            {products.map((p: any) => <ProductCard key={p.item_id} p={p} isDuplicateTab={activeTab === 'new_discoveries'} />)}
           </div>
         )}
       </div>
