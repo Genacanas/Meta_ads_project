@@ -317,7 +317,7 @@ function ShopProductsModal({ companyName, excludeIds = [], onClose }: { companyN
         {/* Body */}
         <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
           <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
-            {products.map((p: any) => <ProductCard key={p.item_id} p={p} isDuplicateTab={activeTab === 'new_discoveries'} />)}
+            {products.map((p: any) => <ProductCard key={p.item_id} p={p} />)}
           </div>
           
           {loading && (
@@ -451,7 +451,7 @@ function ShopSection({ shop, activeTab, onStatusChange }: { shop: any, activeTab
           </div>
         ) : (
           <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
-            {products.map((p: any) => <ProductCard key={p.item_id} p={p} isDuplicateTab={activeTab === 'new_discoveries'} />)}
+            {products.map((p: any) => <ProductCard key={p.item_id} p={p} />)}
           </div>
         )}
       </div>
@@ -727,6 +727,7 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
                     key={p.item_id} 
                     p={p} 
                     showReviewButton={true}
+                    isDuplicateTab={true}
                     onReview={(id) => {
                       setProducts(prev => prev.filter(item => item.item_id !== id))
                       onCountChange(prev => Math.max(0, prev - 1))
@@ -767,6 +768,7 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
                       key={p.item_id} 
                       p={p} 
                       showReviewButton={false} 
+                      isDuplicateTab={true}
                     />
                   ))}
                 </div>
