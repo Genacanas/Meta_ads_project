@@ -167,8 +167,8 @@ function ProductCard({
   }
 
   const hasGoldenBorder = isPotential && !hidePotentialBorder
-  const isExactDuplicate = p.duplicate_status === 'EXACT'
-  const isDoubtfulDuplicate = p.duplicate_status === 'DOUBTFUL'
+  const isExactDuplicate = p.duplicate_status && p.duplicate_status.includes('EXACT')
+  const isDoubtfulDuplicate = p.duplicate_status && p.duplicate_status.includes('DOUBTFUL')
   const hasDuplicateBorder = isDoubtfulDuplicate || isExactDuplicate
   const highlightShadow = hasBeenAnalyzed && !hasGoldenBorder && !hasDuplicateBorder ? '0 0 0 2px #6366f1' : 'none'
   const finalBoxShadow = hasGoldenBorder
@@ -199,7 +199,7 @@ function ProductCard({
           </a>
         )}
         {imgSrc ? (
-          <img src={imgSrc} alt={p.title} loading="lazy" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={imgSrc} alt={p.title} loading="lazy" referrerPolicy="no-referrer" className={hasDuplicateBorder ? "duplicate-image-blur" : ""} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <div className="flex items-center justify-center" style={{ height: '100%' }}><ImageOff size={32} opacity={0.3} /></div>
         )}
@@ -494,10 +494,19 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
       if (!res.ok) throw new Error('Failed to fetch new discoveries')
       const json = await res.json()
       const arr = Array.isArray(json.data) ? json.data : []
+      
+      const sortedArr = [...arr].sort((a, b) => {
+        const isADup = a.duplicate_status && (a.duplicate_status.includes('EXACT') || a.duplicate_status.includes('DOUBTFUL'));
+        const isBDup = b.duplicate_status && (b.duplicate_status.includes('EXACT') || b.duplicate_status.includes('DOUBTFUL'));
+        if (isADup && !isBDup) return 1;
+        if (!isADup && isBDup) return -1;
+        return 0;
+      });
+
       if (append) {
-        setProducts(prev => [...prev, ...arr])
+        setProducts(prev => [...prev, ...sortedArr])
       } else {
-        setProducts(arr)
+        setProducts(sortedArr)
       }
       setShopsMap(prev => ({...prev, ...(json.shops || {})}))
       onCountChange(json.total)

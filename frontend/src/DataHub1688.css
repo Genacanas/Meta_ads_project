@@ -1,0 +1,12 @@
+
+/* Estilo dinamico para imagenes duplicadas */
+.duplicate-image-blur {
+    filter: blur(8px) grayscale(50%);
+    opacity: 0.7;
+    transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+.duplicate-image-blur:hover {
+    filter: blur(0px) grayscale(0%);
+    opacity: 1;
+}
