@@ -85,7 +85,7 @@ function ProductCard({
   onReview?: (item_id: string) => void
 }) {
   const [loadingAI, setLoadingAI] = useState(false)
-  const [hasBeenAnalyzed, setHasBeenAnalyzed] = useState(false)
+  const [hasBeenAnalyzed, setHasBeenAnalyzed] = useState(!!p.ai_summary)
   const [aiSummary, setAiSummary] = useState(p.ai_summary || null)
   const [displayTitle, setDisplayTitle] = useState(p.english_title || p.title)
   const [isPotential, setIsPotential] = useState(p.is_potential || false)
