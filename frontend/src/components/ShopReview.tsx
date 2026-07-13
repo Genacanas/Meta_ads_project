@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package, Calendar, Sparkles, Star, AlertTriangle } from 'lucide-react'
+import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package, Calendar, Sparkles, Star, AlertTriangle, Tag, X, Plus } from 'lucide-react'
 import './DataHub1688.css'
 
 const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'
@@ -77,20 +77,49 @@ function ProductCard({
   onPotentialChange,
   showReviewButton,
   onReview,
-  isDuplicateTab
+  isDuplicateTab,
+  showTagSelector,
+  availableTags,
+  onTagChange
 }: { 
   p: any, 
   hidePotentialBorder?: boolean, 
   onPotentialChange?: (item_id: string, is_potential: boolean) => void,
   showReviewButton?: boolean,
   onReview?: (item_id: string) => void,
-  isDuplicateTab?: boolean
+  isDuplicateTab?: boolean,
+  showTagSelector?: boolean,
+  availableTags?: string[],
+  onTagChange?: (item_id: string, newTag: string | null) => void
 }) {
   const [loadingAI, setLoadingAI] = useState(false)
   const [hasBeenAnalyzed, setHasBeenAnalyzed] = useState(!!p.ai_summary)
   const [aiSummary, setAiSummary] = useState(p.ai_summary || null)
   const [displayTitle, setDisplayTitle] = useState(p.english_title || p.title)
   const [isPotential, setIsPotential] = useState(p.is_potential || false)
+  const [tagOpen, setTagOpen] = useState(false)
+  const [tagSearch, setTagSearch] = useState('')
+  const [localTag, setLocalTag] = useState<string | null>(p.tag || null)
+
+  useEffect(() => {
+    setLocalTag(p.tag || null)
+  }, [p.tag])
+
+  const handleUpdateTag = async (newTag: string | null) => {
+    setTagOpen(false)
+    setTagSearch('')
+    setLocalTag(newTag)
+    if (onTagChange) onTagChange(p.item_id, newTag)
+    try {
+      await fetch(`${API_BASE}/products/${p.item_id}/tag`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tag: newTag })
+      })
+    } catch (e) {
+      console.error('Failed to update tag', e)
+    }
+  }
 
   const togglePotential = async () => {
     const newVal = !isPotential
@@ -268,6 +297,66 @@ function ProductCard({
             <Calendar size={12} /> {dateStr}
           </div>
         )}
+        
+        {/* Tag Selector */}
+        {showTagSelector && (
+          <div style={{ marginBottom: '0.5rem', position: 'relative' }}>
+            {localTag ? (
+              <div style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#f59e0b', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }} onClick={() => setTagOpen(!tagOpen)}>
+                <Tag size={10} style={{ marginRight: '4px' }} />
+                {localTag}
+                <X size={12} style={{ marginLeft: '4px', cursor: 'pointer', opacity: 0.7 }} onClick={(e) => { e.stopPropagation(); handleUpdateTag(null); }} />
+              </div>
+            ) : (
+              <button onClick={() => setTagOpen(!tagOpen)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.5)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+                <Plus size={10} style={{ marginRight: '2px' }} /> tag
+              </button>
+            )}
+            
+            {tagOpen && (
+              <>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setTagOpen(false)} />
+                <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: '4px', background: '#1e1e2d', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '8px', zIndex: 50, width: '200px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+                  <input 
+                    type="text" 
+                    placeholder="New tag..." 
+                    value={tagSearch} 
+                    onChange={e => setTagSearch(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && tagSearch.trim()) {
+                        handleUpdateTag(tagSearch.trim());
+                      }
+                    }}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px', borderRadius: '4px', fontSize: '0.8rem', marginBottom: '8px', outline: 'none' }}
+                  />
+                  <div style={{ maxHeight: '120px', overflowY: 'auto' }}>
+                    {availableTags?.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase())).map(t => (
+                      <div 
+                        key={t} 
+                        onClick={() => handleUpdateTag(t)}
+                        style={{ padding: '6px', fontSize: '0.8rem', color: '#e2e8f0', cursor: 'pointer', borderRadius: '4px' }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        {t}
+                      </div>
+                    ))}
+                    {tagSearch.trim() && !availableTags?.some(t => t.toLowerCase() === tagSearch.trim().toLowerCase()) && (
+                      <div 
+                        onClick={() => handleUpdateTag(tagSearch.trim())}
+                        style={{ padding: '6px', fontSize: '0.8rem', color: '#10b981', cursor: 'pointer', borderRadius: '4px', borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: '4px' }}
+                      >
+                        <Plus size={10} style={{ marginRight: '4px', display: 'inline-block' }} />
+                        Create "{tagSearch.trim()}"
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         <div className="flex justify-between items-center" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
           <span>MOQ: {p.moq || '1'}</span>
           {productUrl && (
@@ -806,6 +895,35 @@ function PotentialProducts() {
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
+  const [activeTagFilter, setActiveTagFilter] = useState<string | 'all' | 'none'>('all')
+  const [tagToDelete, setTagToDelete] = useState<string | null>(null)
+
+  const tagCounts = products.reduce((acc, p) => {
+    if (p.tag) acc[p.tag] = (acc[p.tag] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+  const availableTags = Object.keys(tagCounts)
+
+  const handleDeleteTag = async (tag: string) => {
+    try {
+      await fetch(`${API_BASE}/products/tags/delete`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tag_name: tag })
+      })
+      setProducts(prev => prev.map(p => p.tag === tag ? { ...p, tag: null } : p))
+      setTagToDelete(null)
+      if (activeTagFilter === tag) setActiveTagFilter('all')
+    } catch (e) {
+      console.error('Failed to delete tag', e)
+    }
+  }
+
+  const visibleProducts = activeTagFilter === 'all' 
+    ? products 
+    : activeTagFilter === 'none'
+    ? products.filter(p => !p.tag)
+    : products.filter(p => p.tag === activeTagFilter)
 
   const fetchPotential = async (pageNum: number, append: boolean = false) => {
     setLoading(true)
@@ -840,12 +958,64 @@ function PotentialProducts() {
         </div>
       )}
       
+      {/* Kanban Filter Bar */}
+      {products.length > 0 && (
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button 
+            onClick={() => setActiveTagFilter('all')}
+            style={{ padding: '6px 12px', borderRadius: '16px', background: activeTagFilter === 'all' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255,255,255,0.05)', border: activeTagFilter === 'all' ? '1px solid #6366f1' : '1px solid transparent', color: activeTagFilter === 'all' ? '#a5b4fc' : 'rgba(255,255,255,0.7)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s' }}>
+            All
+          </button>
+          
+          {availableTags.map(tag => (
+            <div key={tag} style={{ display: 'flex', alignItems: 'center', background: activeTagFilter === tag ? 'rgba(245, 158, 11, 0.2)' : 'rgba(245, 158, 11, 0.05)', border: activeTagFilter === tag ? '1px solid #f59e0b' : '1px solid rgba(245, 158, 11, 0.2)', color: '#f59e0b', borderRadius: '16px', overflow: 'hidden', transition: 'all 0.2s' }}>
+              <button 
+                onClick={() => setActiveTagFilter(tag)}
+                style={{ padding: '6px 10px', background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {tag} <span style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '10px', fontSize: '0.75rem' }}>{tagCounts[tag]}</span>
+              </button>
+              <button onClick={() => setTagToDelete(tag)} style={{ padding: '6px', background: 'rgba(255,255,255,0.05)', border: 'none', borderLeft: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                <X size={12} />
+              </button>
+            </div>
+          ))}
+          
+          <button 
+            onClick={() => setActiveTagFilter('none')}
+            style={{ padding: '6px 12px', borderRadius: '16px', background: activeTagFilter === 'none' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255,255,255,0.05)', border: activeTagFilter === 'none' ? '1px solid rgba(255,255,255,0.4)' : '1px solid transparent', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s' }}>
+            Untagged
+          </button>
+        </div>
+      )}
+
+      {tagToDelete && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#1e1e2d', padding: '2rem', borderRadius: '12px', maxWidth: '400px', border: '1px solid var(--border-color)' }}>
+            <h3 style={{ marginTop: 0, color: '#f87171', display: 'flex', alignItems: 'center', gap: '8px' }}><AlertTriangle size={20} /> Delete Tag "{tagToDelete}"</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.5 }}>
+              This action will remove the tag <strong>"{tagToDelete}"</strong> from the {tagCounts[tagToDelete]} products that currently have it. 
+              <br/><br/>
+              The products themselves will <strong>not</strong> be deleted, they will just lose their tag.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+              <button onClick={() => setTagToDelete(null)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border-color)', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => handleDeleteTag(tagToDelete)} style={{ padding: '8px 16px', background: '#ef4444', border: 'none', color: '#fff', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Confirm Deletion</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
-        {products.map(p => (
+        {visibleProducts.map(p => (
           <ProductCard 
             key={p.item_id} 
             p={p} 
             hidePotentialBorder={true}
+            showTagSelector={true}
+            availableTags={availableTags}
+            onTagChange={(id, newTag) => {
+              setProducts(prev => prev.map(item => item.item_id === id ? { ...item, tag: newTag } : item))
+            }}
             onPotentialChange={(id, isPot) => {
               if (!isPot) {
                 setProducts(prev => prev.filter(item => item.item_id !== id))
