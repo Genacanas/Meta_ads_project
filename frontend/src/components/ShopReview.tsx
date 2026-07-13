@@ -909,13 +909,15 @@ function PotentialProducts() {
   const [activeTagFilter, setActiveTagFilter] = useState<string | 'all' | 'none'>('all')
   const [tagToDelete, setTagToDelete] = useState<string | null>(null)
   const [globalTags, setGlobalTags] = useState<string[]>([])
+  const [globalTagCounts, setGlobalTagCounts] = useState<Record<string, number>>({})
 
   const tagCounts = products.reduce((acc, p) => {
     if (p.tag) acc[p.tag] = (acc[p.tag] || 0) + 1
     return acc
   }, {} as Record<string, number>)
   
-  const availableTags = Array.from(new Set([...Object.keys(tagCounts), ...globalTags]))
+  const dropdownTags = Array.from(new Set([...Object.keys(tagCounts), ...globalTags]))
+  const kanbanTags = Array.from(new Set([...Object.keys(tagCounts), ...Object.keys(globalTagCounts)]))
 
   const handleDeleteTag = async (tag: string) => {
     try {
@@ -926,6 +928,11 @@ function PotentialProducts() {
       })
       setProducts(prev => prev.map(p => p.tag === tag ? { ...p, tag: null } : p))
       setTagToDelete(null)
+      setGlobalTagCounts(prev => {
+        const next = { ...prev }
+        delete next[tag]
+        return next
+      })
       if (activeTagFilter === tag) setActiveTagFilter('all')
     } catch (e) {
       console.error('Failed to delete tag', e)
@@ -971,9 +978,22 @@ function PotentialProducts() {
     }
   }
 
+  const fetchGlobalTagCounts = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/products/potential/tags/counts`)
+      if (res.ok) {
+        const json = await res.json()
+        if (json.counts) setGlobalTagCounts(json.counts)
+      }
+    } catch (e) {
+      console.error('Failed to fetch global tag counts', e)
+    }
+  }
+
   useEffect(() => {
     fetchPotential(1, false)
     fetchGlobalTags()
+    fetchGlobalTagCounts()
   }, [])
 
   return (
@@ -993,12 +1013,12 @@ function PotentialProducts() {
             All
           </button>
           
-          {availableTags.map(tag => (
+          {kanbanTags.map(tag => (
             <div key={tag} style={{ display: 'flex', alignItems: 'center', background: activeTagFilter === tag ? 'rgba(245, 158, 11, 0.2)' : 'rgba(245, 158, 11, 0.05)', border: activeTagFilter === tag ? '1px solid #f59e0b' : '1px solid rgba(245, 158, 11, 0.2)', color: '#f59e0b', borderRadius: '16px', overflow: 'hidden', transition: 'all 0.2s' }}>
               <button 
                 onClick={() => setActiveTagFilter(tag)}
                 style={{ padding: '6px 10px', background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {tag} <span style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '10px', fontSize: '0.75rem' }}>{tagCounts[tag] || 0}</span>
+                {tag} <span style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '10px', fontSize: '0.75rem' }}>{globalTagCounts[tag] !== undefined ? globalTagCounts[tag] : (tagCounts[tag] || 0)}</span>
               </button>
               <button 
                 onClick={() => setTagToDelete(tag)} 
@@ -1024,7 +1044,7 @@ function PotentialProducts() {
           <div style={{ background: '#1e1e2d', padding: '2rem', borderRadius: '12px', maxWidth: '400px', border: '1px solid var(--border-color)' }}>
             <h3 style={{ marginTop: 0, color: '#f87171', display: 'flex', alignItems: 'center', gap: '8px' }}><AlertTriangle size={20} /> Delete Tag "{tagToDelete}"</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.5 }}>
-              This action will remove the tag <strong>"{tagToDelete}"</strong> from the {tagCounts[tagToDelete]} products that currently have it. 
+              This action will remove the tag <strong>"{tagToDelete}"</strong> from the {globalTagCounts[tagToDelete] !== undefined ? globalTagCounts[tagToDelete] : (tagCounts[tagToDelete] || 0)} products that currently have it. 
               <br/><br/>
               The products themselves will <strong>not</strong> be deleted, they will just lose their tag.
             </p>
@@ -1043,7 +1063,7 @@ function PotentialProducts() {
             p={p} 
             hidePotentialBorder={true}
             showTagSelector={true}
-            availableTags={availableTags}
+            availableTags={dropdownTags}
             onTagChange={(id, newTag) => {
               setProducts(prev => prev.map(item => item.item_id === id ? { ...item, tag: newTag } : item))
             }}
