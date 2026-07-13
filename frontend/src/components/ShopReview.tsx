@@ -322,18 +322,20 @@ function ProductCard({
             </button>
           )}
           
-          <button
-            onClick={handleDetectCategory}
-            disabled={detectingCategory}
-            style={{ marginTop: '0.5rem', width: '100%', padding: '0.6rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '8px', cursor: detectingCategory ? 'not-allowed' : 'pointer', fontWeight: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
-          >
-            {detectingCategory ? <RefreshCw size={16} className="spin" /> : <Tag size={16} />}
-            {detectingCategory ? 'Detecting...' : 'Analyze Category'}
-          </button>
+          {!localCategory && (
+            <button
+              onClick={handleDetectCategory}
+              disabled={detectingCategory}
+              style={{ marginTop: '0.5rem', width: '100%', padding: '0.6rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '8px', cursor: detectingCategory ? 'not-allowed' : 'pointer', fontWeight: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
+            >
+              {detectingCategory ? <RefreshCw size={16} className="spin" /> : <Tag size={16} />}
+              {detectingCategory ? 'Detecting...' : 'Analyze Category'}
+            </button>
+          )}
           
           {localCategory && (
             <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '6px', fontSize: '0.75rem', color: '#94a3b8' }}>
-              <strong>Categoría:</strong> {localCategory}
+              <strong>Category:</strong> {localCategory}
             </div>
           )}
         </div>
