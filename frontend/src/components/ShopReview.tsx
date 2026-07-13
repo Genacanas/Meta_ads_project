@@ -302,10 +302,10 @@ function ProductCard({
         {showTagSelector && (
           <div style={{ marginBottom: '0.5rem', position: 'relative' }}>
             {localTag ? (
-              <div style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#f59e0b', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }} onClick={() => setTagOpen(!tagOpen)}>
-                <Tag size={10} style={{ marginRight: '4px' }} />
-                {localTag}
-                <X size={12} style={{ marginLeft: '4px', cursor: 'pointer', opacity: 0.7 }} onClick={(e) => { e.stopPropagation(); handleUpdateTag(null); }} />
+              <div style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#f59e0b', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', maxWidth: '100%', overflow: 'hidden' }} onClick={() => setTagOpen(!tagOpen)}>
+                <Tag size={10} style={{ marginRight: '4px', flexShrink: 0 }} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{localTag}</span>
+                <X size={12} style={{ marginLeft: '4px', cursor: 'pointer', opacity: 0.7, flexShrink: 0 }} onClick={(e) => { e.stopPropagation(); handleUpdateTag(null); }} />
               </div>
             ) : (
               <button onClick={() => setTagOpen(!tagOpen)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.5)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
@@ -330,18 +330,22 @@ function ProductCard({
                     style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px', borderRadius: '4px', fontSize: '0.8rem', marginBottom: '8px', outline: 'none' }}
                   />
                   <div style={{ maxHeight: '120px', overflowY: 'auto' }}>
-                    {availableTags?.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase())).map(t => (
-                      <div 
-                        key={t} 
-                        onClick={() => handleUpdateTag(t)}
-                        style={{ padding: '6px', fontSize: '0.8rem', color: '#e2e8f0', cursor: 'pointer', borderRadius: '4px' }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                      >
-                        {t}
-                      </div>
-                    ))}
-                    {tagSearch.trim() && !availableTags?.some(t => t.toLowerCase() === tagSearch.trim().toLowerCase()) && (
+                    {availableTags && availableTags.length > 0 ? (
+                      availableTags.filter(t => t && t.toLowerCase().includes(tagSearch.toLowerCase())).map(t => (
+                        <div 
+                          key={t} 
+                          onClick={() => handleUpdateTag(t)}
+                          style={{ padding: '6px', fontSize: '0.8rem', color: '#e2e8f0', cursor: 'pointer', borderRadius: '4px' }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                          {t}
+                        </div>
+                      ))
+                    ) : (
+                      !tagSearch.trim() && <div style={{ padding: '6px', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', fontStyle: 'italic' }}>No tags yet</div>
+                    )}
+                    {tagSearch.trim() && (!availableTags || !availableTags.some(t => t && t.toLowerCase() === tagSearch.trim().toLowerCase())) && (
                       <div 
                         onClick={() => handleUpdateTag(tagSearch.trim())}
                         style={{ padding: '6px', fontSize: '0.8rem', color: '#10b981', cursor: 'pointer', borderRadius: '4px', borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: '4px' }}
