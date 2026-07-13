@@ -106,6 +106,24 @@ function ProductCard({
   const [tagOpen, setTagOpen] = useState(false)
   const [tagSearch, setTagSearch] = useState('')
   const [localTag, setLocalTag] = useState<string | null>(p.tag || null)
+  const [detectingCategory, setDetectingCategory] = useState(false)
+  const [localCategory, setLocalCategory] = useState(p.category || null)
+
+  const handleDetectCategory = async () => {
+    setDetectingCategory(true)
+    try {
+      const res = await fetch(`${API_BASE}/products/${p.item_id}/category-detect`, {
+        method: 'POST'
+      })
+      if (!res.ok) throw new Error('Failed to detect category')
+      const data = await res.json()
+      if (data.category) setLocalCategory(data.category)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setDetectingCategory(false)
+    }
+  }
 
   useEffect(() => {
     setLocalTag(p.tag || null)
@@ -302,6 +320,21 @@ function ProductCard({
               {loadingAI ? <RefreshCw size={14} className={loadingAI ? "spin" : ""} /> : <Sparkles size={14} />}
               {loadingAI ? 'Analyzing...' : 'Analyze with AI'}
             </button>
+          )}
+          
+          <button
+            onClick={handleDetectCategory}
+            disabled={detectingCategory}
+            style={{ marginTop: '0.5rem', width: '100%', padding: '0.6rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '8px', cursor: detectingCategory ? 'not-allowed' : 'pointer', fontWeight: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
+          >
+            {detectingCategory ? <RefreshCw size={16} className="spin" /> : <Tag size={16} />}
+            {detectingCategory ? 'Detecting...' : 'Analyze Category'}
+          </button>
+          
+          {localCategory && (
+            <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '6px', fontSize: '0.75rem', color: '#94a3b8' }}>
+              <strong>Categoría:</strong> {localCategory}
+            </div>
           )}
         </div>
         <div className="flex justify-between items-center" style={{ fontSize: '0.85rem', marginBottom: '0.5rem', marginTop: '0.5rem' }}>
