@@ -1002,9 +1002,9 @@ function PotentialProducts() {
               </button>
               <button 
                 onClick={() => setTagToDelete(tag)} 
-                style={{ padding: '6px 8px 6px 0', background: 'transparent', border: 'none', color: 'inherit', opacity: 0.6, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
+                style={{ padding: '6px 12px', background: 'transparent', border: 'none', borderLeft: '1px solid rgba(245, 158, 11, 0.1)', color: 'inherit', opacity: 0.7, cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'rgba(245, 158, 11, 0.2)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.background = 'transparent'; }}
               >
                 <X size={14} />
               </button>
