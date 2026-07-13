@@ -897,12 +897,14 @@ function PotentialProducts() {
   const [hasMore, setHasMore] = useState(true)
   const [activeTagFilter, setActiveTagFilter] = useState<string | 'all' | 'none'>('all')
   const [tagToDelete, setTagToDelete] = useState<string | null>(null)
+  const [globalTags, setGlobalTags] = useState<string[]>([])
 
   const tagCounts = products.reduce((acc, p) => {
     if (p.tag) acc[p.tag] = (acc[p.tag] || 0) + 1
     return acc
   }, {} as Record<string, number>)
-  const availableTags = Object.keys(tagCounts)
+  
+  const availableTags = Array.from(new Set([...Object.keys(tagCounts), ...globalTags]))
 
   const handleDeleteTag = async (tag: string) => {
     try {
@@ -946,8 +948,21 @@ function PotentialProducts() {
     }
   }
 
+  const fetchGlobalTags = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/products/tags/summary`)
+      if (res.ok) {
+        const json = await res.json()
+        if (json.data) setGlobalTags(json.data)
+      }
+    } catch (e) {
+      console.error('Failed to fetch global tags', e)
+    }
+  }
+
   useEffect(() => {
     fetchPotential(1, false)
+    fetchGlobalTags()
   }, [])
 
   return (
@@ -972,10 +987,15 @@ function PotentialProducts() {
               <button 
                 onClick={() => setActiveTagFilter(tag)}
                 style={{ padding: '6px 10px', background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {tag} <span style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '10px', fontSize: '0.75rem' }}>{tagCounts[tag]}</span>
+                {tag} <span style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '10px', fontSize: '0.75rem' }}>{tagCounts[tag] || 0}</span>
               </button>
-              <button onClick={() => setTagToDelete(tag)} style={{ padding: '6px', background: 'rgba(255,255,255,0.05)', border: 'none', borderLeft: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                <X size={12} />
+              <button 
+                onClick={() => setTagToDelete(tag)} 
+                style={{ padding: '6px 8px 6px 0', background: 'transparent', border: 'none', color: 'inherit', opacity: 0.6, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
+              >
+                <X size={14} />
               </button>
             </div>
           ))}
