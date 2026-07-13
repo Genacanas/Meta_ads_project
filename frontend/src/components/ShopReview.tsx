@@ -83,7 +83,8 @@ function ProductCard({
   onTagChange,
   bulkMode,
   isSelected,
-  onSelect
+  onSelect,
+  readOnly
 }: { 
   p: any, 
   hidePotentialBorder?: boolean, 
@@ -96,7 +97,8 @@ function ProductCard({
   onTagChange?: (item_id: string, newTag: string | null) => void,
   bulkMode?: boolean,
   isSelected?: boolean,
-  onSelect?: (id: string) => void
+  onSelect?: (id: string) => void,
+  readOnly?: boolean
 }) {
   const [loadingAI, setLoadingAI] = useState(false)
   const [hasBeenAnalyzed, setHasBeenAnalyzed] = useState(!!p.ai_summary)
@@ -243,7 +245,7 @@ function ProductCard({
   return (
     <div className="card" style={{ background: isExactDuplicate ? 'rgba(239, 68, 68, 0.3)' : 'var(--bg-secondary)', padding: 0, borderRadius: '12px', border: hasDuplicateBorder ? '1px solid rgba(239,68,68,0.6)' : '1px solid var(--border-color)', boxShadow: finalBoxShadow, display: 'flex', flexDirection: 'column', position: 'relative', zIndex: tagOpen ? 50 : 1 }}>
       <div style={{ width: '100%', height: '220px', background: '#1a1a24', position: 'relative', overflow: 'hidden', borderTopLeftRadius: '11px', borderTopRightRadius: '11px' }}>
-        {bulkMode && (
+        {!readOnly && bulkMode && (
           <div
             onClick={(e) => { e.stopPropagation(); if (onSelect) onSelect(p.item_id); }}
             style={{ position: 'absolute', top: '8px', left: '8px', width: '22px', height: '22px', borderRadius: '6px', border: isSelected ? '2px solid #6366f1' : '2px solid rgba(255,255,255,0.5)', background: isSelected ? '#6366f1' : 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}
@@ -251,12 +253,14 @@ function ProductCard({
             {isSelected && <Check size={14} color="white" />}
           </div>
         )}
-        <button 
-          onClick={togglePotential}
-          style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}>
-          <Star size={18} color={isPotential ? '#f59e0b' : '#fff'} fill={isPotential ? '#f59e0b' : 'none'} />
-        </button>
-        {showReviewButton && (
+        {!readOnly && (
+          <button 
+            onClick={togglePotential}
+            style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}>
+            <Star size={18} color={isPotential ? '#f59e0b' : '#fff'} fill={isPotential ? '#f59e0b' : 'none'} />
+          </button>
+        )}
+        {!readOnly && showReviewButton && (
           <AnimatedCheckButton onClick={handleReview} />
         )}
         {(isExactDuplicate || isDoubtfulDuplicate) && (
@@ -290,14 +294,15 @@ function ProductCard({
         
         {/* AI Section */}
         <div style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}>
-          {aiSummary ? (
+          {aiSummary && (
             <div style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '8px', borderRadius: '6px', fontSize: '0.8rem', color: '#c7d2fe', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px', fontWeight: 'bold' }}>
                 <Sparkles size={12} /> AI Analysis
               </div>
               {aiSummary}
             </div>
-          ) : (
+          )}
+          {!readOnly && !aiSummary && (
             <button 
               onClick={handleAIAnalyze}
               disabled={loadingAI}
@@ -322,7 +327,7 @@ function ProductCard({
             </button>
           )}
           
-          {!localCategory && (
+          {!readOnly && !localCategory && (
             <button
               onClick={handleDetectCategory}
               disabled={detectingCategory}
@@ -354,7 +359,7 @@ function ProductCard({
         )}
         
         {/* Tag Selector */}
-        {showTagSelector && (
+        {!readOnly && showTagSelector && (
           <div style={{ marginBottom: '0.5rem', position: 'relative' }}>
             {localTag ? (
               <div style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#f59e0b', padding: '4px 10px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', maxWidth: '100%', overflow: 'hidden', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(245, 158, 11, 0.25)'} onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)'} onClick={() => setTagOpen(!tagOpen)}>
@@ -436,25 +441,70 @@ function ProductCard({
   )
 }
 
+// ── Global cache for Old Products to prevent refetching during session ─────
+const oldProductsCache: Record<string, { products: any[], tmapiPage: number, tmapiHasMore: boolean, fromDb: boolean }> = {}
+
 // ── Modal for showing all products of a shop ──────────────────────────────────
 function ShopProductsModal({ companyName, excludeIds = [], onClose }: { companyName: string, excludeIds?: string[], onClose: () => void }) {
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const [page, setPage] = useState(1)
+  const [tmapiPage, setTmapiPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
+  const [fromDb, setFromDb] = useState(false)
 
-  const fetchProducts = async (pageNum: number) => {
+  const fetchInitial = async () => {
+    if (oldProductsCache[companyName]) {
+      const cache = oldProductsCache[companyName]
+      setProducts(cache.products)
+      setTmapiPage(cache.tmapiPage)
+      setHasMore(cache.tmapiHasMore)
+      setFromDb(cache.fromDb)
+      return
+    }
+
     setLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/shops/name/${encodeURIComponent(companyName)}/products?page=${pageNum}&limit=100`)
-      if (!res.ok) throw new Error('Failed to fetch products')
+      // 1. Try DB first
+      const res = await fetch(`${API_BASE}/shops/name/${encodeURIComponent(companyName)}/products?page=1&limit=1000`)
+      if (!res.ok) throw new Error('Failed to fetch local products')
       const json = await res.json()
-      if (pageNum === 1) {
-        setProducts(json.data.filter((p: any) => !excludeIds.includes(p.item_id)))
+      
+      const filtered = json.data.filter((p: any) => !excludeIds.includes(p.item_id))
+      
+      if (filtered.length > 0) {
+        setProducts(filtered)
+        setFromDb(true)
+        setHasMore(true) // Always allow fetching more from TMAPI
+        oldProductsCache[companyName] = { products: filtered, tmapiPage: 1, tmapiHasMore: true, fromDb: true }
       } else {
-        setProducts(prev => [...prev, ...json.data.filter((p: any) => !excludeIds.includes(p.item_id))])
+        // 2. No local products, try TMAPI directly
+        await fetchTmapi(1, [])
       }
-      setHasMore(pageNum * json.limit < json.total)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchTmapi = async (pageToFetch: number, currentProducts: any[]) => {
+    setLoading(true)
+    try {
+      const res = await fetch(`${API_BASE}/shops/name/${encodeURIComponent(companyName)}/tmapi-products?page=${pageToFetch}&limit=20`)
+      if (!res.ok) throw new Error('Failed to fetch from TMAPI')
+      const json = await res.json()
+      
+      const newItems = json.data.filter((p: any) => !excludeIds.includes(p.item_id) && !currentProducts.some(cp => cp.item_id === p.item_id))
+      
+      const merged = [...currentProducts, ...newItems]
+      const more = pageToFetch * json.limit < json.total
+
+      setProducts(merged)
+      setTmapiPage(pageToFetch)
+      setHasMore(more)
+      setFromDb(false)
+      
+      oldProductsCache[companyName] = { products: merged, tmapiPage: pageToFetch, tmapiHasMore: more, fromDb: false }
     } catch (e) {
       console.error(e)
     } finally {
@@ -463,7 +513,7 @@ function ShopProductsModal({ companyName, excludeIds = [], onClose }: { companyN
   }
 
   useEffect(() => {
-    fetchProducts(1)
+    fetchInitial()
   }, [companyName])
 
   return (
@@ -489,14 +539,14 @@ function ShopProductsModal({ companyName, excludeIds = [], onClose }: { companyN
             </div>
           ) : (
             <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
-              {products.map((p: any) => <ProductCard key={p.item_id} p={p} />)}
+              {products.map((p: any) => <ProductCard key={p.item_id} p={p} readOnly={true} />)}
             </div>
           )}
           
           {loading && (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'rgba(255,255,255,0.4)' }}>
               <RefreshCw size={32} color="#6366f1" className="spin" style={{ marginBottom: '1rem' }} />
-              <p>Loading products...</p>
+              <p>Loading products from 1688...</p>
             </div>
           )}
           
@@ -504,13 +554,12 @@ function ShopProductsModal({ companyName, excludeIds = [], onClose }: { companyN
             <div style={{ textAlign: 'center', marginTop: '2rem' }}>
               <button 
                 onClick={() => {
-                  const nextPage = page + 1
-                  setPage(nextPage)
-                  fetchProducts(nextPage)
+                  const nextPage = fromDb ? 1 : tmapiPage + 1
+                  fetchTmapi(nextPage, products)
                 }}
                 style={{ padding: '0.75rem 1.5rem', background: '#312e81', border: '1px solid #4f46e5', color: '#e0e7ff', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem' }}
               >
-                Load More (100)
+                Buscar más en 1688
               </button>
             </div>
           )}
