@@ -90,6 +90,10 @@ export function ScraperDashboard() {
       if (type === 'find-new-shops') {
         const sp = parseInt(startPage) || 1;
         const ep = parseInt(endPage) || 1;
+        if (sp < 1 || ep < 1) {
+          alert("Page numbers must be 1 or greater.");
+          return;
+        }
         if (ep < sp) {
           alert("End Page must be greater than or equal to Start Page.");
           return;
