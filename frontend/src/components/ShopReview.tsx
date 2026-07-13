@@ -559,7 +559,7 @@ function ShopProductsModal({ companyName, excludeIds = [], onClose }: { companyN
                 }}
                 style={{ padding: '0.75rem 1.5rem', background: '#312e81', border: '1px solid #4f46e5', color: '#e0e7ff', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem' }}
               >
-                Buscar más en 1688
+                Search more on 1688
               </button>
             </div>
           )}
