@@ -925,7 +925,7 @@ function PotentialProducts() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
+  const [hasMore, setHasMore] = useState(false)
   const [activeTagFilter, setActiveTagFilter] = useState<string | 'all' | 'none'>('all')
   const [tagToDelete, setTagToDelete] = useState<string | null>(null)
   const [globalTags, setGlobalTags] = useState<string[]>([])
@@ -1238,7 +1238,7 @@ function PotentialProducts() {
         </div>
       )}
 
-      {hasMore && !loading && (
+      {hasMore && !loading && activeTagFilter === 'all' && (
          <div style={{ textAlign: 'center', marginTop: '2rem', paddingBottom: '2rem' }}>
            <button onClick={() => {
              const n = page + 1
