@@ -1198,7 +1198,16 @@ function PotentialProducts() {
             showTagSelector={true}
             availableTags={dropdownTags}
             onTagChange={(id, newTag) => {
+              const oldItem = products.find(item => item.item_id === id)
+              const oldTag = oldItem?.tag
               setProducts(prev => prev.map(item => item.item_id === id ? { ...item, tag: newTag } : item))
+              
+              setGlobalTagCounts(prev => {
+                const next = { ...prev }
+                if (oldTag && next[oldTag]) next[oldTag]--
+                if (newTag) next[newTag] = (next[newTag] || 0) + 1
+                return next
+              })
             }}
             onPotentialChange={(id, isPot) => {
               if (!isPot) {
