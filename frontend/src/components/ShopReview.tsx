@@ -479,9 +479,17 @@ function ShopProductsModal({ companyName, excludeIds = [], onClose }: { companyN
         
         {/* Body */}
         <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
-          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
-            {products.map((p: any) => <ProductCard key={p.item_id} p={p} />)}
-          </div>
+          {products.length === 0 && !loading && !hasMore ? (
+            <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'rgba(255,255,255,0.4)' }}>
+              <Package size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+              <p style={{ fontSize: '1.1rem', color: '#e2e8f0', marginBottom: '0.5rem' }}>No old products found</p>
+              <p style={{ fontSize: '0.9rem' }}>All known products for this shop are already displayed as new discoveries.</p>
+            </div>
+          ) : (
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
+              {products.map((p: any) => <ProductCard key={p.item_id} p={p} />)}
+            </div>
+          )}
           
           {loading && (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'rgba(255,255,255,0.4)' }}>
