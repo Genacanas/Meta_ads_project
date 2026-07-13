@@ -211,7 +211,7 @@ function ProductCard({
   const blurActive = hasDuplicateBorder && isDuplicateTab
 
   return (
-    <div className="card" style={{ background: isExactDuplicate ? 'rgba(239, 68, 68, 0.3)' : 'var(--bg-secondary)', padding: 0, borderRadius: '12px', border: hasDuplicateBorder ? '1px solid rgba(239,68,68,0.6)' : '1px solid var(--border-color)', boxShadow: finalBoxShadow, display: 'flex', flexDirection: 'column' }}>
+    <div className="card" style={{ background: isExactDuplicate ? 'rgba(239, 68, 68, 0.3)' : 'var(--bg-secondary)', padding: 0, borderRadius: '12px', border: hasDuplicateBorder ? '1px solid rgba(239,68,68,0.6)' : '1px solid var(--border-color)', boxShadow: finalBoxShadow, display: 'flex', flexDirection: 'column', position: 'relative', zIndex: tagOpen ? 50 : 1 }}>
       <div style={{ width: '100%', height: '220px', background: '#1a1a24', position: 'relative', overflow: 'hidden', borderTopLeftRadius: '11px', borderTopRightRadius: '11px' }}>
         <button 
           onClick={togglePotential}
