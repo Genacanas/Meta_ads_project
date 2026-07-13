@@ -21,6 +21,8 @@ export function ScraperDashboard() {
   const [jobState, setJobState] = useState<JobStatus | null>(null)
   const [jobHistory, setJobHistory] = useState<JobStatus[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [startPage, setStartPage] = useState(1)
+  const [endPage, setEndPage] = useState(2)
   
   const logsContainerRef = useRef<HTMLDivElement>(null)
 
@@ -82,7 +84,14 @@ export function ScraperDashboard() {
   const startJob = async (type: 'find-new-shops' | 'check-new-products' | 'manual-deduplication') => {
     if (activeJobId) return // wait for current to finish
     try {
-      const res = await fetch(`${API_BASE}/jobs/${type}`, { method: 'POST' })
+      const body = type === 'find-new-shops' ? JSON.stringify({ start_page: startPage, end_page: endPage }) : undefined;
+      const headers = type === 'find-new-shops' ? { 'Content-Type': 'application/json' } : undefined;
+      
+      const res = await fetch(`${API_BASE}/jobs/${type}`, { 
+        method: 'POST',
+        headers,
+        body
+      })
       if (res.ok) {
         const data = await res.json()
         setActiveJobId(data.job_id)
@@ -147,14 +156,35 @@ export function ScraperDashboard() {
       </div>
 
       {/* Control Buttons */}
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', background: 'var(--bg-card)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-        <button 
-          onClick={() => startJob('find-new-shops')}
-          disabled={!!activeJobId}
-          style={btnStyle('rgba(99,102,241,0.15)', '#818cf8')}>
-          <Search size={18} />
-          Find New Shops
-        </button>
+      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', background: 'var(--bg-card)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', alignItems: 'center' }}>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(99,102,241,0.05)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(99,102,241,0.2)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.85rem', color: '#a5b4fc' }}>Start Page:</span>
+            <input 
+              type="number" 
+              min="1" 
+              value={startPage} 
+              onChange={e => setStartPage(Math.max(1, parseInt(e.target.value) || 1))}
+              style={{ width: '60px', background: '#1e1e2d', border: '1px solid #333', color: '#fff', padding: '0.2rem 0.5rem', borderRadius: '4px' }}
+            />
+            <span style={{ fontSize: '0.85rem', color: '#a5b4fc', marginLeft: '0.5rem' }}>End Page:</span>
+            <input 
+              type="number" 
+              min={startPage} 
+              value={endPage} 
+              onChange={e => setEndPage(Math.max(startPage, parseInt(e.target.value) || startPage))}
+              style={{ width: '60px', background: '#1e1e2d', border: '1px solid #333', color: '#fff', padding: '0.2rem 0.5rem', borderRadius: '4px' }}
+            />
+          </div>
+          <button 
+            onClick={() => startJob('find-new-shops')}
+            disabled={!!activeJobId}
+            style={btnStyle('rgba(99,102,241,0.15)', '#818cf8')}>
+            <Search size={18} />
+            Find New Shops
+          </button>
+        </div>
         
         <button 
           onClick={() => startJob('check-new-products')}
