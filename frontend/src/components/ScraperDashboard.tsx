@@ -21,8 +21,8 @@ export function ScraperDashboard() {
   const [jobState, setJobState] = useState<JobStatus | null>(null)
   const [jobHistory, setJobHistory] = useState<JobStatus[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
-  const [startPage, setStartPage] = useState(1)
-  const [endPage, setEndPage] = useState(2)
+  const [startPage, setStartPage] = useState("1")
+  const [endPage, setEndPage] = useState("2")
   
   const logsContainerRef = useRef<HTMLDivElement>(null)
 
@@ -84,8 +84,19 @@ export function ScraperDashboard() {
   const startJob = async (type: 'find-new-shops' | 'check-new-products' | 'manual-deduplication') => {
     if (activeJobId) return // wait for current to finish
     try {
-      const body = type === 'find-new-shops' ? JSON.stringify({ start_page: startPage, end_page: endPage }) : undefined;
-      const headers = type === 'find-new-shops' ? { 'Content-Type': 'application/json' } : undefined;
+      let body = undefined;
+      let headers = undefined;
+
+      if (type === 'find-new-shops') {
+        const sp = parseInt(startPage) || 1;
+        const ep = parseInt(endPage) || 1;
+        if (ep < sp) {
+          alert("End Page must be greater than or equal to Start Page.");
+          return;
+        }
+        body = JSON.stringify({ start_page: sp, end_page: ep });
+        headers = { 'Content-Type': 'application/json' };
+      }
       
       const res = await fetch(`${API_BASE}/jobs/${type}`, { 
         method: 'POST',
@@ -165,15 +176,15 @@ export function ScraperDashboard() {
               type="number" 
               min="1" 
               value={startPage} 
-              onChange={e => setStartPage(Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={e => setStartPage(e.target.value)}
               style={{ width: '60px', background: '#1e1e2d', border: '1px solid #333', color: '#fff', padding: '0.2rem 0.5rem', borderRadius: '4px' }}
             />
             <span style={{ fontSize: '0.85rem', color: '#a5b4fc', marginLeft: '0.5rem' }}>End Page:</span>
             <input 
               type="number" 
-              min={startPage} 
+              min="1" 
               value={endPage} 
-              onChange={e => setEndPage(Math.max(startPage, parseInt(e.target.value) || startPage))}
+              onChange={e => setEndPage(e.target.value)}
               style={{ width: '60px', background: '#1e1e2d', border: '1px solid #333', color: '#fff', padding: '0.2rem 0.5rem', borderRadius: '4px' }}
             />
           </div>
