@@ -302,10 +302,17 @@ function ProductCard({
         {showTagSelector && (
           <div style={{ marginBottom: '0.5rem', position: 'relative' }}>
             {localTag ? (
-              <div style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#f59e0b', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', maxWidth: '100%', overflow: 'hidden' }} onClick={() => setTagOpen(!tagOpen)}>
-                <Tag size={10} style={{ marginRight: '4px', flexShrink: 0 }} />
+              <div style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#f59e0b', padding: '4px 10px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', maxWidth: '100%', overflow: 'hidden', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(245, 158, 11, 0.25)'} onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)'} onClick={() => setTagOpen(!tagOpen)}>
+                <Tag size={12} style={{ marginRight: '6px', flexShrink: 0 }} />
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{localTag}</span>
-                <X size={12} style={{ marginLeft: '4px', cursor: 'pointer', opacity: 0.7, flexShrink: 0 }} onClick={(e) => { e.stopPropagation(); handleUpdateTag(null); }} />
+                <div 
+                  onClick={(e) => { e.stopPropagation(); handleUpdateTag(null); }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', marginLeft: '6px', marginRight: '-4px', borderRadius: '50%', cursor: 'pointer', transition: 'background 0.2s' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(245, 158, 11, 0.3)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <X size={14} style={{ opacity: 0.9, flexShrink: 0 }} />
+                </div>
               </div>
             ) : (
               <button onClick={() => setTagOpen(!tagOpen)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.5)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
