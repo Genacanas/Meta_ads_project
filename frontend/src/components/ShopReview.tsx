@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package, Calendar, Sparkles, Star, AlertTriangle, Tag, X, Plus } from 'lucide-react'
+import { Store, CheckCircle, XCircle, RefreshCw, Clock, ImageOff, ExternalLink, Package, Calendar, Sparkles, Star, AlertTriangle, Tag, X, Plus, Check, Pencil } from 'lucide-react'
 import './DataHub1688.css'
 
 const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'
@@ -80,7 +80,10 @@ function ProductCard({
   isDuplicateTab,
   showTagSelector,
   availableTags,
-  onTagChange
+  onTagChange,
+  bulkMode,
+  isSelected,
+  onSelect
 }: { 
   p: any, 
   hidePotentialBorder?: boolean, 
@@ -90,7 +93,10 @@ function ProductCard({
   isDuplicateTab?: boolean,
   showTagSelector?: boolean,
   availableTags?: string[],
-  onTagChange?: (item_id: string, newTag: string | null) => void
+  onTagChange?: (item_id: string, newTag: string | null) => void,
+  bulkMode?: boolean,
+  isSelected?: boolean,
+  onSelect?: (id: string) => void
 }) {
   const [loadingAI, setLoadingAI] = useState(false)
   const [hasBeenAnalyzed, setHasBeenAnalyzed] = useState(!!p.ai_summary)
@@ -124,8 +130,13 @@ function ProductCard({
   const togglePotential = async () => {
     const newVal = !isPotential
     setIsPotential(newVal) // optimistic
+    const newTag = newVal ? 'PENDING' : null
+    setLocalTag(newTag)
     if (onPotentialChange) {
       onPotentialChange(p.item_id, newVal)
+    }
+    if (onTagChange) {
+      onTagChange(p.item_id, newTag)
     }
     try {
       await fetch(`${API_BASE}/products/${p.item_id}/potential`, {
@@ -136,6 +147,7 @@ function ProductCard({
     } catch (e) {
       console.error(e)
       setIsPotential(!newVal) // revert on error
+      setLocalTag(p.tag || null)
       if (onPotentialChange) {
         onPotentialChange(p.item_id, !newVal)
       }
@@ -213,6 +225,14 @@ function ProductCard({
   return (
     <div className="card" style={{ background: isExactDuplicate ? 'rgba(239, 68, 68, 0.3)' : 'var(--bg-secondary)', padding: 0, borderRadius: '12px', border: hasDuplicateBorder ? '1px solid rgba(239,68,68,0.6)' : '1px solid var(--border-color)', boxShadow: finalBoxShadow, display: 'flex', flexDirection: 'column', position: 'relative', zIndex: tagOpen ? 50 : 1 }}>
       <div style={{ width: '100%', height: '220px', background: '#1a1a24', position: 'relative', overflow: 'hidden', borderTopLeftRadius: '11px', borderTopRightRadius: '11px' }}>
+        {bulkMode && (
+          <div
+            onClick={(e) => { e.stopPropagation(); if (onSelect) onSelect(p.item_id); }}
+            style={{ position: 'absolute', top: '8px', left: '8px', width: '22px', height: '22px', borderRadius: '6px', border: isSelected ? '2px solid #6366f1' : '2px solid rgba(255,255,255,0.5)', background: isSelected ? '#6366f1' : 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}
+          >
+            {isSelected && <Check size={14} color="white" />}
+          </div>
+        )}
         <button 
           onClick={togglePotential}
           style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}>
@@ -910,6 +930,14 @@ function PotentialProducts() {
   const [tagToDelete, setTagToDelete] = useState<string | null>(null)
   const [globalTags, setGlobalTags] = useState<string[]>([])
   const [globalTagCounts, setGlobalTagCounts] = useState<Record<string, number>>({})
+  // Feature 2: bulk select
+  const [bulkMode, setBulkMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkTag, setBulkTag] = useState<string>('')
+  const [bulkTagOpen, setBulkTagOpen] = useState(false)
+  // Feature 3: tag rename
+  const [tagToRename, setTagToRename] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
 
   const tagCounts = products.reduce((acc, p) => {
     if (p.tag) acc[p.tag] = (acc[p.tag] || 0) + 1
@@ -918,6 +946,32 @@ function PotentialProducts() {
   
   const dropdownTags = Array.from(new Set([...Object.keys(tagCounts), ...globalTags]))
   const kanbanTags = Array.from(new Set([...Object.keys(tagCounts), ...Object.keys(globalTagCounts)]))
+
+  const handleRenameTag = async () => {
+    if (!tagToRename || !renameValue.trim() || renameValue === tagToRename) return
+    const oldName = tagToRename
+    const newName = renameValue.trim()
+    try {
+      await fetch(`${API_BASE}/products/tags/rename`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ old_name: oldName, new_name: newName })
+      })
+      setProducts(prev => prev.map(p => p.tag === oldName ? { ...p, tag: newName } : p))
+      setGlobalTagCounts(prev => {
+        const next = { ...prev }
+        next[newName] = next[oldName] || 0
+        delete next[oldName]
+        return next
+      })
+      setGlobalTags(prev => prev.map(t => t === oldName ? newName : t))
+      if (activeTagFilter === oldName) setActiveTagFilter(newName)
+      setTagToRename(null)
+      setRenameValue('')
+    } catch (e) {
+      console.error('Failed to rename tag', e)
+    }
+  }
 
   const handleDeleteTag = async (tag: string) => {
     try {
@@ -1020,6 +1074,15 @@ function PotentialProducts() {
                 style={{ padding: '6px 10px', background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 {tag} <span style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '10px', fontSize: '0.75rem' }}>{globalTagCounts[tag] !== undefined ? globalTagCounts[tag] : (tagCounts[tag] || 0)}</span>
               </button>
+              <button
+                onClick={() => { setTagToRename(tag); setRenameValue(tag); }}
+                style={{ padding: '6px 8px', background: 'transparent', border: 'none', borderLeft: '1px solid rgba(245, 158, 11, 0.1)', color: 'inherit', opacity: 0.7, cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.background = 'transparent'; }}
+                title="Rename tag"
+              >
+                <Pencil size={13} />
+              </button>
               <button 
                 onClick={() => setTagToDelete(tag)} 
                 style={{ padding: '6px 12px', background: 'transparent', border: 'none', borderLeft: '1px solid rgba(245, 158, 11, 0.1)', color: 'inherit', opacity: 0.7, cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}
@@ -1035,6 +1098,13 @@ function PotentialProducts() {
             onClick={() => setActiveTagFilter('none')}
             style={{ padding: '6px 12px', borderRadius: '16px', background: activeTagFilter === 'none' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255,255,255,0.05)', border: activeTagFilter === 'none' ? '1px solid rgba(255,255,255,0.4)' : '1px solid transparent', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s' }}>
             Untagged
+          </button>
+
+          <button
+            onClick={() => { setBulkMode(!bulkMode); setSelectedIds(new Set()); }}
+            style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: '16px', background: bulkMode ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.05)', border: bulkMode ? '1px solid #6366f1' : '1px solid rgba(255,255,255,0.2)', color: bulkMode ? '#a5b4fc' : 'rgba(255,255,255,0.7)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s' }}
+          >
+            {bulkMode ? '✕ Cancel' : '☑ Select'}
           </button>
         </div>
       )}
@@ -1056,6 +1126,26 @@ function PotentialProducts() {
         </div>
       )}
 
+      {tagToRename && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#1e1e2d', padding: '2rem', borderRadius: '12px', maxWidth: '400px', width: '90%', border: '1px solid var(--border-color)' }}>
+            <h3 style={{ marginTop: 0, color: '#a5b4fc', display: 'flex', alignItems: 'center', gap: '8px' }}><Pencil size={20} /> Rename Tag</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>New name for <strong>"{tagToRename}"</strong>:</p>
+            <input
+              autoFocus
+              value={renameValue}
+              onChange={e => setRenameValue(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleRenameTag(); if (e.key === 'Escape') setTagToRename(null); }}
+              style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '8px', fontSize: '1rem', marginBottom: '1.5rem', boxSizing: 'border-box', outline: 'none' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+              <button onClick={() => setTagToRename(null)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border-color)', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={handleRenameTag} disabled={!renameValue.trim() || renameValue === tagToRename} style={{ padding: '8px 16px', background: '#4f46e5', border: 'none', color: '#fff', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, opacity: (!renameValue.trim() || renameValue === tagToRename) ? 0.5 : 1 }}>Rename</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
         {visibleProducts.map(p => (
           <ProductCard 
@@ -1072,9 +1162,75 @@ function PotentialProducts() {
                 setProducts(prev => prev.filter(item => item.item_id !== id))
               }
             }}
+            bulkMode={bulkMode}
+            isSelected={selectedIds.has(p.item_id)}
+            onSelect={(id) => {
+              setSelectedIds(prev => {
+                const next = new Set(prev)
+                if (next.has(id)) next.delete(id)
+                else next.add(id)
+                return next
+              })
+            }}
           />
         ))}
       </div>
+
+      {bulkMode && selectedIds.size > 0 && (
+        <div style={{ position: 'fixed', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', background: '#1e1e2d', border: '1px solid #6366f1', borderRadius: '12px', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', zIndex: 200, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+          <span style={{ color: '#a5b4fc', fontWeight: 600 }}>{selectedIds.size} selected</span>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setBulkTagOpen(!bulkTagOpen)}
+              style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '8px', cursor: 'pointer', minWidth: '140px', textAlign: 'left' }}
+            >
+              {bulkTag || 'Choose tag...'} ▾
+            </button>
+            {bulkTagOpen && (
+              <div style={{ position: 'absolute', bottom: '110%', left: 0, background: '#1e1e2d', border: '1px solid var(--border-color)', borderRadius: '8px', minWidth: '200px', zIndex: 201, overflow: 'hidden' }}>
+                <div style={{ padding: '8px' }}>
+                  <input
+                    autoFocus
+                    placeholder="New tag..."
+                    value={bulkTag}
+                    onChange={e => setBulkTag(e.target.value)}
+                    style={{ width: '100%', background: 'transparent', border: 'none', color: '#fff', outline: 'none', fontSize: '0.9rem', padding: '4px' }}
+                  />
+                </div>
+                <div style={{ borderTop: '1px solid var(--border-color)', maxHeight: '160px', overflowY: 'auto' }}>
+                  {dropdownTags.map(t => (
+                    <div key={t} onClick={() => { setBulkTag(t); setBulkTagOpen(false); }} style={{ padding: '8px 12px', cursor: 'pointer', color: '#f59e0b', fontSize: '0.85rem' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{t}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={async () => {
+              if (!bulkTag) return
+              const ids = Array.from(selectedIds)
+              await fetch(`${API_BASE}/products/bulk/tag`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ item_ids: ids, tag: bulkTag })
+              })
+              setProducts(prev => prev.map(p => selectedIds.has(p.item_id) ? { ...p, tag: bulkTag } : p))
+              setGlobalTagCounts(prev => {
+                const next = { ...prev }
+                next[bulkTag] = (next[bulkTag] || 0) + ids.length
+                return next
+              })
+              setSelectedIds(new Set())
+              setBulkMode(false)
+              setBulkTag('')
+            }}
+            style={{ padding: '8px 20px', background: '#4f46e5', border: 'none', color: '#fff', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
+          >
+            Apply
+          </button>
+          <button onClick={() => { setSelectedIds(new Set()); setBulkMode(false); }} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
+        </div>
+      )}
 
       {loading && (
         <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center' }}>
