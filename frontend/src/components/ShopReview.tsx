@@ -1018,7 +1018,7 @@ function PotentialProducts() {
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
-  const [activeTagFilter, setActiveTagFilter] = useState<string | 'all' | 'none'>('pending')
+  const [activeTagFilter, setActiveTagFilter] = useState<string | 'all' | 'none'>('PENDING')
   const [tagToDelete, setTagToDelete] = useState<string | null>(null)
   const [globalTags, setGlobalTags] = useState<string[]>([])
   const [globalTagCounts, setGlobalTagCounts] = useState<Record<string, number>>({})
