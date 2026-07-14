@@ -5,13 +5,14 @@ import { DataHub1688 } from './components/DataHub1688';
 import { ShopReview } from './components/ShopReview';
 import { ScraperDashboard } from './components/ScraperDashboard';
 import { CategoryExplorer } from './components/CategoryExplorer';
+import { NovtraSync } from './components/NovtraSync';
 
 import './App.css';
 
 function App() {
   const { isAuthenticated } = useAuth();
 
-  const [currentView, setCurrentView] = useState<'products' | 'shops' | 'scraper' | 'categories'>('shops');
+  const [currentView, setCurrentView] = useState<'products' | 'shops' | 'scraper' | 'categories' | 'novtra'>('novtra');
 
   if (!isAuthenticated) {
     return <Login />;
@@ -81,12 +82,28 @@ function App() {
         >
           📦 Categories
         </button>
+
+        <button 
+          onClick={() => setCurrentView('novtra')}
+          style={{ 
+            padding: '0.5rem 1rem', 
+            background: currentView === 'novtra' ? '#6366f1' : 'transparent', 
+            border: currentView === 'novtra' ? 'none' : '1px solid rgba(255,255,255,0.2)', 
+            color: 'white', 
+            borderRadius: '6px',
+            fontWeight: 600,
+            cursor: 'pointer'
+          }}
+        >
+          🌐 Novtra Sync
+        </button>
       </nav>
       <div style={{ flex: 1, overflow: 'auto', background: '#0a0a0f', padding: '1.5rem' }}>
         {currentView === 'products' && <DataHub1688 />}
         {currentView === 'shops' && <ShopReview />}
         {currentView === 'scraper' && <ScraperDashboard />}
         {currentView === 'categories' && <CategoryExplorer />}
+        {currentView === 'novtra' && <NovtraSync />}
       </div>
     </div>
   );
