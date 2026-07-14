@@ -1104,7 +1104,7 @@ function PotentialProducts() {
       } else {
         setProducts(arr)
       }
-      setHasMore(pageNum * json.limit < (json.total || 0))
+      setHasMore(pageNum * (json.limit || 100) < (json.total || 0))
     } catch (e: any) {
       setError(e.message)
     } finally {
@@ -1339,7 +1339,7 @@ function PotentialProducts() {
         </div>
       )}
 
-      {hasMore && !loading && activeTagFilter === 'all' && (
+      {hasMore && !loading && (
          <div style={{ textAlign: 'center', marginTop: '2rem', paddingBottom: '2rem' }}>
            <button onClick={() => {
              const n = page + 1
