@@ -16,7 +16,7 @@ export function DataHub1688() {
     setError(null)
     try {
       // Check status
-      const statusRes = await fetch(`${import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'}/status`)
+      const statusRes = await fetch(`${import.meta.env.DEV ? 'http://127.0.0.1:8000/api' : 'https://backend1688-production.up.railway.app/api'}/status`)
       if (statusRes.ok) {
         setBackendStatus('Online')
       } else {
@@ -24,7 +24,7 @@ export function DataHub1688() {
       }
       
       // Get whitelist categories
-      const wlRes = await fetch(`${import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'}/whitelist`)
+      const wlRes = await fetch(`${import.meta.env.DEV ? 'http://127.0.0.1:8000/api' : 'https://backend1688-production.up.railway.app/api'}/whitelist`)
       if (wlRes.ok) {
         const data = await wlRes.json()
         setWhitelist(data)
@@ -46,7 +46,7 @@ export function DataHub1688() {
     setProducts([])
     
     try {
-      const res = await fetch(`${import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'}/products/${catId}?page_size=20`)
+      const res = await fetch(`${import.meta.env.DEV ? 'http://127.0.0.1:8000/api' : 'https://backend1688-production.up.railway.app/api'}/products/${catId}?page_size=20`)
       if (!res.ok) {
         const errData = await res.json()
         throw new Error(errData.detail || 'Failed to fetch products')

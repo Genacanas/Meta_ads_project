@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { ChevronRight, ChevronDown, Folder, FolderOpen, Database } from 'lucide-react'
 
-const API_BASE = import.meta.env.VITE_1688_API_URL || 'http://127.0.0.1:8000/api'
+const API_BASE = import.meta.env.DEV ? 'http://127.0.0.1:8000/api' : 'https://backend1688-production.up.railway.app/api';
 
 interface CategoryNode {
   id: string

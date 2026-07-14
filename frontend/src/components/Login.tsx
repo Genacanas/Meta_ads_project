@@ -20,7 +20,7 @@ export const Login: React.FC = () => {
       formData.append('username', username);
       formData.append('password', password);
 
-      const API_URL = import.meta.env.VITE_1688_API_URL || 'http://localhost:8000/api';
+      const API_URL = import.meta.env.DEV ? 'http://localhost:8000/api' : 'https://backend1688-production.up.railway.app/api';
       const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: {
