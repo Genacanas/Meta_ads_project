@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { ExternalLink, Search, RefreshCw, BarChart2, Inbox } from 'lucide-react';
+import { ExternalLink, Search, RefreshCw, Inbox } from 'lucide-react';
 
 interface NovtraProduct {
   id: number;
