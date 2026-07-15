@@ -791,6 +791,24 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
   }
   shopGroups.sort((a, b) => b.products.length - a.products.length)
 
+  const parseSales = (str: any) => {
+    if (!str) return 0;
+    const s = String(str);
+    const num = parseFloat(s.replace(/[^0-9.]/g, '')) || 0;
+    if (s.toLowerCase().includes('k')) return num * 1000;
+    if (s.includes('万') || s.toLowerCase().includes('w')) return num * 10000;
+    if (s.toLowerCase().includes('m')) return num * 1000000;
+    return num;
+  };
+
+  for (const g of shopGroups) {
+    g.products.sort((a, b) => {
+      const salesA = parseSales(a.sold_count || a.sale_info?.sale_quantity);
+      const salesB = parseSales(b.sold_count || b.sale_info?.sale_quantity);
+      return salesB - salesA;
+    });
+  }
+
   const visibleGroups = shopGroups.filter(g => !hiddenShops.has(g.shopName) && g.products.length > 0)
   const multiGroups = visibleGroups.filter(g => g.products.length > 1)
   const singleGroups = visibleGroups.filter(g => g.products.length === 1)
@@ -798,7 +816,11 @@ function NewDiscoveries({ onCountChange, onStatusChange }: { onCountChange: Reac
     ...g.products[0],
     shopName: g.shopName,
     shopUrl: g.shopUrl
-  }))
+  })).sort((a, b) => {
+    const salesA = parseSales(a.sold_count || a.sale_info?.sale_quantity);
+    const salesB = parseSales(b.sold_count || b.sale_info?.sale_quantity);
+    return salesB - salesA;
+  })
 
   const btnStyle = (bg: string, color: string): React.CSSProperties => ({
     padding: '0.45rem 0.9rem', borderRadius: '6px', border: 'none',
