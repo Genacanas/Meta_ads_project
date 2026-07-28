@@ -1388,9 +1388,76 @@ function PotentialProducts() {
   )
 }
 
+// ── Saved Shops Tab ─────────────────────────────────────────────────────────
+function SavedShopsTab() {
+  const [shops, setShops] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      setLoading(true)
+      try {
+        const res = await fetch(`${API_BASE}/shops/saved-stats`)
+        if (!res.ok) throw new Error('Failed to fetch saved shops stats')
+        const json = await res.json()
+        setShops(json.data || [])
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchStats()
+  }, [])
+
+  if (loading) return <div style={{ color: 'var(--text-secondary)' }} className="flex items-center gap-2"><RefreshCw className="animate-spin" size={16} /> Loading saved shops...</div>
+  if (error) return <div style={{ color: 'var(--danger)' }}>Error: {error}</div>
+
+  return (
+    <div style={{ padding: '1rem 0', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      {shops.length === 0 ? (
+        <div style={{ color: 'var(--text-secondary)' }}>No shops with saved products found.</div>
+      ) : (
+        shops.map((shop, idx) => (
+          <div key={shop.company_name} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <div>
+                <h3 style={{ margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#e2e8f0', fontSize: '1.25rem' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>#{idx + 1}</span> {shop.company_name}
+                </h3>
+                <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  <span style={{ color: '#3b82f6', fontWeight: 600 }}>{shop.saved_count} Saved Products</span>
+                  {shop.composite_score && <span>Score: {shop.composite_score}</span>}
+                  {shop.shop_url && (
+                    <a href={shop.shop_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      Open Shop <ExternalLink size={12} />
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+              {shop.products.map((p: any) => (
+                <ProductCard 
+                  key={p.item_id} 
+                  p={p} 
+                  readOnly={true} 
+                  hidePotentialBorder={true}
+                />
+              ))}
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  )
+}
+
 // ── Main ShopReview component ────────────────────────────────────────────────
 export function ShopReview() {
-  const [activeTab, setActiveTab] = useState<'new_discoveries' | 'pending' | 'tracking' | 'discarded' | 'not_right_now' | 'potential_products'>(() => {
+  const [activeTab, setActiveTab] = useState<'new_discoveries' | 'pending' | 'tracking' | 'discarded' | 'not_right_now' | 'potential_products' | 'saved_shops'>(() => {
     return (localStorage.getItem('shopReview_activeTab') as any) || 'new_discoveries'
   })
   const [potentialCount, setPotentialCount] = useState<number | null>(null)
@@ -1445,7 +1512,7 @@ export function ShopReview() {
   }
 
   useEffect(() => { 
-    if (activeTab === 'new_discoveries' || activeTab === 'potential_products') return;
+    if (activeTab === 'new_discoveries' || activeTab === 'potential_products' || activeTab === 'saved_shops') return;
     setPage(1)
     fetchShops(activeTab, 1, false) 
   }, [activeTab])
@@ -1468,6 +1535,7 @@ export function ShopReview() {
     { key: 'not_right_now', label: '⏳ Not Right Now', color: '#a855f7', bg: 'rgba(168,85,247,0.2)' },
     { key: 'discarded', label: '🔴 Discarded Shops', color: '#f87171', bg: 'rgba(239,68,68,0.2)' },
     { key: 'potential_products', label: '⭐ Potential', color: '#f59e0b', bg: 'rgba(245,158,11,0.2)' },
+    { key: 'saved_shops', label: '🏪 Saved Shops', color: '#3b82f6', bg: 'rgba(59,130,246,0.2)' },
   ] as const
 
   return (
@@ -1485,7 +1553,7 @@ export function ShopReview() {
               </strong>{' '}
               {activeTab === 'new_discoveries' ? 'new products' : activeTab === 'potential_products' ? 'Saved products' : activeTab === 'pending' ? 'shops left' : activeTab === 'tracking' ? 'tracked shops' : activeTab === 'not_right_now' ? 'shops waiting' : 'discarded shops'}
             </div>
-            {hasMore && activeTab !== 'new_discoveries' && activeTab !== 'potential_products' && (
+            {hasMore && activeTab !== 'new_discoveries' && activeTab !== 'potential_products' && activeTab !== 'saved_shops' && (
               <button 
                 onClick={async () => {
                   setLoading(true)
@@ -1529,7 +1597,7 @@ export function ShopReview() {
                 Load All
               </button>
             )}
-            {activeTab !== 'new_discoveries' && activeTab !== 'potential_products' && (
+            {activeTab !== 'new_discoveries' && activeTab !== 'potential_products' && activeTab !== 'saved_shops' && (
               <button onClick={() => { setPage(1); fetchShops(activeTab, 1, false); }} disabled={loading}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#e2e8f0', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
                 <RefreshCw size={16} /> Refresh
@@ -1559,9 +1627,11 @@ export function ShopReview() {
 
       {activeTab === 'new_discoveries' ? (
         <NewDiscoveries onCountChange={setNewProductsCount} onStatusChange={updateStatus} />
-      ) : activeTab === 'potential_products' ? (
-        <PotentialProducts />
-      ) : (
+        ) : activeTab === 'potential_products' ? (
+          <PotentialProducts />
+        ) : activeTab === 'saved_shops' ? (
+          <SavedShopsTab />
+        ) : (
         <>
           {loading ? (
             <div style={{ height: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)' }}>
