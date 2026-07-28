@@ -1438,13 +1438,13 @@ function SavedShopsTab() {
               </div>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
               {shop.products.map((p: any) => (
                 <ProductCard 
                   key={p.item_id} 
                   p={p} 
-                  readOnly={true} 
-                  hidePotentialBorder={true}
+                  isDuplicateTab={true}
+                  showReviewButton={false}
                 />
               ))}
             </div>
